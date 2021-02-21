@@ -1,3 +1,6 @@
+---
+tag: math
+---
 Simple continued fractions.
 
 ```csharp
