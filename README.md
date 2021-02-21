@@ -40,7 +40,7 @@ $$
 f(x) = sin(x)
 $$
 
-```C#
+```csharp
 public static void Main(string[] args)
 {
 }
