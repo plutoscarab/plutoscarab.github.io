@@ -2,3 +2,5 @@ theme: jekyll-theme-hacker
 enable_mathjax: true
 kramdown:
   math_engine: mathjax
+site:
+  author: Bret Mulvey
