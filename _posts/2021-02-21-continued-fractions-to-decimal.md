@@ -1,5 +1,5 @@
 ---
-tag: math
+tags: [math, C#]
 ---
 It's surprisingly easy to compute the decimal value of simple continued fractions of the form
 
