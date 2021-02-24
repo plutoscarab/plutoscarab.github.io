@@ -93,3 +93,4 @@ Multiply by 10 and you should get $$[14; 3]$$ which is nothing like $$[10; 20, 3
 
 We could compute the ratio $$\frac {43} {30}$$ from the continued fraction, multiply that by 10, and then convert back to continued fraction, but I want to be able to use this on infinite continued fractions, using lazy computation to process one term at a time. So that approach won't work.
 
+To calculate $$10x$$ using term-by-term computation, we really need to be able to compute $$10 \cdot (a_0 + \frac 1 y)$$ where $$a_0$$ is the first term of $$x$$ and $$y$$ represents the remaining terms.  For example, for $$x = [1; 2, 3, 4]$$ we have $$a_0 = 1$$ and $$y = [2; 3, 4]$$.
