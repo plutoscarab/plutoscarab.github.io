@@ -4,7 +4,7 @@ tags: [math, C#]
 It's surprisingly easy to compute the decimal value of simple continued fractions of the form
 
 $$
-x = a_0 + \cfrac 1 {a_1 + \cfrac 1 {a_2 + \cfrac 1 {a_3 + \cdots}}}
+x = t_0 + \cfrac 1 {t_1 + \cfrac 1 {t_2 + \cfrac 1 {t_3 + \cdots}}}
 $$
 
 without a lot of code, assuming you have a "big integer" data type available. I'll show you how to do it in C# using `System.Numerics.BigInteger`, and later we'll build on this to create a full-fledged continued fraction data type that we can use to do arithmetic.
@@ -93,4 +93,32 @@ Multiply by 10 and you should get $$[14; 3]$$ which is nothing like $$[10; 20, 3
 
 We could compute the ratio $$\frac {43} {30}$$ from the continued fraction, multiply that by 10, and then convert back to continued fraction, but I want to be able to use this on infinite continued fractions, using lazy computation to process one term at a time. So that approach won't work.
 
-To calculate $$10x$$ using term-by-term computation, we really need to be able to compute $$10 \cdot (a_0 + \frac 1 y)$$ where $$a_0$$ is the first term of $$x$$ and $$y$$ represents the remaining terms.  For example, for $$x = [1; 2, 3, 4]$$ we have $$a_0 = 1$$ and $$y = [2; 3, 4]$$.
+To calculate $$10x$$ using term-by-term computation, we really need to be able to compute $$10 \cdot (t_0 + \frac 1 y)$$ where $$a_0$$ is the first term of $$x$$ and $$y$$ represents the remaining terms.  For example, for $$x = [1; 2, 3, 4]$$ we have $$t_0 = 1$$ and $$y = [2; 3, 4]$$.  Mathematician Bill Gosper figured out the trick to this. We actually compute
+
+$$
+f(x) = \frac {a + bx} {c + dx}
+$$
+
+When $$a = 0, b = 1, c = 1, d = 0$$ we get $$10x$$. So we have
+
+$$
+f(x) = f(t_0 + \frac 1 y) &= \frac {a + b(t_0 + \frac 1 y)} {c + d(t_0 + \frac 1 y)} \\
+&= \frac {ay + b(t_0y +1)} {cy + d(t_0y+1)} \\
+&= \frac {b + (a + bt_0)y} {d + (c + dt_0)y}
+$$
+
+This has the same form as $$f(x)$$ but with the coefficients transformed.
+
+$$
+\begin{array}{rcl}
+a & \rightarrow & b  \\
+b & \rightarrow & a + t_0b \\
+c & \rightarrow & d \\
+d & \rightarrow & c + t_0d \\
+\end{array}
+$$
+
+
+
+
+$$
