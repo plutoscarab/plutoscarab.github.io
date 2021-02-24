@@ -102,9 +102,11 @@ $$
 When $$a = 0, b = 1, c = 1, d = 0$$ we get $$10x$$. So we have
 
 $$
+\begin{align}
 f(x) = f(t_0 + \frac 1 y) &= \frac {a + b(t_0 + \frac 1 y)} {c + d(t_0 + \frac 1 y)} \\
 &= \frac {ay + b(t_0y +1)} {cy + d(t_0y+1)} \\
 &= \frac {b + (a + bt_0)y} {d + (c + dt_0)y}
+\end{align}
 $$
 
 This has the same form as $$f(x)$$ but with the coefficients transformed.
@@ -118,7 +120,3 @@ d & \rightarrow & c + t_0d \\
 \end{array}
 $$
 
-
-
-
-$$
