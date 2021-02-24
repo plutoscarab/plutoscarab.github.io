@@ -99,13 +99,13 @@ $$
 f(x) = \frac {a + bx} {c + dx}
 $$
 
-When $$a = 0, b = 1, c = 1, d = 0$$ we get $$10x$$. So we have
+When $$a = 0, b = 10, c = 1, d = 0$$ we get $$10x$$. So we have
 
 $$
 \begin{align}
 f(x) = f(t_0 + \frac 1 y) &= \frac {a + b(t_0 + \frac 1 y)} {c + d(t_0 + \frac 1 y)} \\
 &= \frac {ay + b(t_0y +1)} {cy + d(t_0y+1)} \\
-&= \frac {b + (a + bt_0)y} {d + (c + dt_0)y}
+&= \frac {b + (a + t_0b)y} {d + (c + t_0d)y}
 \end{align}
 $$
 
@@ -120,3 +120,25 @@ d & \rightarrow & c + t_0d \\
 \end{array}
 $$
 
+So we just need to maintain four variables, and to consume one term of $$x$$ we can just do
+
+```csharp
+BigInteger a = 0, b = 10, c = 1, d = 0;
+
+foreach (var term in terms)
+{
+    (a, b) = (b, a + b * term);
+    (c, d) = (d, c + d * term);
+```
+
+We're using `BigInteger` because these values can grow arbitrarily large.
+
+To determine the next digit to write, we need to know the integer portion of $$f(x)$$. If all we know is that $$x$$ isn't negative (we actually know more than that, but we don't need to), then we know that
+
+$$
+\frac { a + bx } { c + dx }
+$$
+
+is somewhere between $$\left\lfloor \frac a c \right\rfloor$$ when $$x=0$$ and $$\left\lfloor \frac b x \right\rfloor$$ when $$x$$ is large. If these two values are the same, we know that's the integer portion of the value.
+
+If the integer portion is $$n$$, we can subtract $$n(c+dx)$$ from the numerator 
