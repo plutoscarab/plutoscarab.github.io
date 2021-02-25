@@ -107,6 +107,7 @@ $$
 -x &= -t_0 - 1 + \cfrac 1 {1 + \cfrac 1 {y - 1}} \\
 &= [-t_0 - 1, 1, y - 1] \\
 &= [-t_0 - 1, 1, t_1 - 1, t_2, \cdots]
+\end{align}
 $$
 
 Now if $$t_1 = 1$$ then the $$t_1 - 1$$ term becomes zero, and we don't allow fraction terms that aren't positive. In that case we can use the identity
