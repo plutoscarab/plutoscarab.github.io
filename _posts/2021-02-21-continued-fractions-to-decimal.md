@@ -234,12 +234,12 @@ foreach (var term in terms)
 
 We're using `BigInteger` because these values can grow arbitrarily large.
 
-But one tweak we need to make is that we've already written out the first term as the integer part of the value, so we need to skip it. But to get the right result for the fractional part, we need to compute the rest of the value assuming the first term was zero. In other words, we can't just emit the digits of [2; 3, 4], we need to emit the digits of [0; 2, 3, 4]. The digits are completely different. So we'll skip the first term but initialize our four variables with what they would have been had we consumed a zero at the start of the sequence.
+But one tweak we need to make is that we've already written out the first term as the integer part of the value, so we need to skip it. But to get the right result for the fractional part, we need to compute the rest of the value assuming the first term was zero. In other words, we can't just emit the digits of [2; 3, 4], we need to emit the digits of [0; 2, 3, 4]. The digits are completely different. So we'll skip the first term but initialize our four variables with what they would have been had we consumed a zero at the start of the sequence. We also want to break out of the loop once we've written enough decimal digits.
 
 ```csharp
 BigInteger a = 10, b = 0, c = 0, d = 1;
 
-foreach (var term in terms.Skip(1))
+foreach (var term in terms.Skip(1).TakeWhile(_ => places > 0))
 {
     (a, b) = (b, a + b * term);
     (c, d) = (d, c + d * term);
