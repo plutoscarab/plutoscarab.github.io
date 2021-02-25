@@ -86,7 +86,7 @@ static void Main(string[] args)
 
 To get this to work with continued fractions, we need to be able to extract the integer portion of the value (which is easy), to negate the value (which is not too hard), and to be able to multiply by 10 which is not nearly as easy as it sounds. 
 
-# Negating a continued fraction
+## Negating a continued fraction
 
 In simple continued fractions only $$t_0$$ can be negative. All the other terms $$t_1, t_2, \dots$$ are assumed to be strictly positive. Let's think of our continued fraction $$x = [t_0; t_1, t_2, \cdots]$$ as $$x = t_0 + \frac 1 y$$ where $$y = [t_1; t_2, t_3, \cdots]$$.
 
@@ -124,9 +124,56 @@ $$
 -x = -[t_0 - 1, t_2 + 1, t_3, \cdots]
 $$
 
-for the $$t_1 = 1$$ case.
+for the $$t_1 = 1$$ case. 
 
-# Multiplying by 10
+In code, we change from `double` to a series of terms represented by `IEnumerable<BigInteger>`.
+
+```csharp
+public static IEnumerable<BigInteger> Negate(IEnumerable<BigInteger> terms)
+{
+    var arr = terms.Take(3).ToArray();
+    
+    if (arr.Length == 0)
+    {
+        return Enumerable.Empty<BigInteger>();
+    }
+    
+    if (arr.Length == 1)
+    {
+        return new[] { -arr[0] };
+    }
+    
+    if (arr[1] == BigInteger.One)
+    {
+        return new[] { -arr[0] - BigInteger.One, arr[2] + BigInteger.One }.Concat(terms.Skip(3));
+    }
+    
+    return new[] { -arr[0] - BigInteger.One, BigInteger.One, arr[1] - BigInteger.One }.Concat(terms.Skip(2));
+}
+
+public static void Write(IEnumerable<BigInteger> terms, int places, TextWriter writer)
+{
+    if (!terms.Any())
+    {
+        writer.Write('∞');
+        return;
+    }
+    
+    if (terms.First().Sign < 0)
+    {
+        writer.Write('-');
+        Write(Negate(terms), place, writer);
+        return;
+    }
+    
+    if (terms.Take(2).Count() == 1 && terms.First().IsZero)
+    {
+        writer.Write('0');
+        return;
+    }
+```
+
+## Multiplying by 10
 
 Consider the continued fraction $$[1; 2, 3, 4]$$ which is short-hand for
 
@@ -138,7 +185,7 @@ Multiply by 10 and you should get $$[14; 3]$$ which is nothing like $$[10; 20, 3
 
 We could compute the ratio $$\frac {43} {30}$$ from the continued fraction, multiply that by 10, and then convert back to continued fraction, but I want to be able to use this on infinite continued fractions, using lazy computation to process one term at a time. So that approach won't work.
 
-To calculate $$10x$$ using term-by-term computation, we really need to be able to compute $$10 \cdot (t_0 + \frac 1 y)$$ where $$a_0$$ is the first term of $$x$$ and $$y$$ represents the remaining terms.  For example, for $$x = [1; 2, 3, 4]$$ we have $$t_0 = 1$$ and $$y = [2; 3, 4]$$.  Mathematician Bill Gosper figured out the trick to this. We actually compute
+To calculate $$10x$$ using term-by-term computation, we really need to be able to compute $$10 \cdot (t_0 + \frac 1 y)$$ where $$t_0$$ is the first term of $$x$$, and $$y$$ represents the remaining terms.  For example, for $$x = [1; 2, 3, 4]$$ we have $$t_0 = 1$$ and $$y = [2; 3, 4]$$.  Mathematician Bill Gosper figured out the trick to this. We actually compute
 
 $$
 f(x) = \frac {a + bx} {c + dx}
@@ -184,6 +231,42 @@ $$
 \frac { a + bx } { c + dx }
 $$
 
-is somewhere between $$\left\lfloor \frac a c \right\rfloor$$ when $$x=0$$ and $$\left\lfloor \frac b x \right\rfloor$$ when $$x$$ is large. If these two values are the same, we know that's the integer portion of the value.
+is somewhere between $$\left\lfloor \frac a c \right\rfloor$$ when $$x=0$$ and $$\left\lfloor \frac b d \right\rfloor$$ when $$x$$ is large. If these two values are the same, we know that's the integer portion of the value.
 
-If the integer portion is $$n$$, we can subtract $$n(c+dx)$$ from the numerator 
+If the integer portion is $$n$$, we can subtract it as follows.
+
+$$
+\begin{align}
+\frac {a+bx} {c+dx} - n &= \frac {a+bx} {c+dx} - \frac {n(c+dx)} {c+dx}  \\
+&= \frac {a - cn + (b-dn)x} {c+dx}
+$$
+
+But because $$n = \lfloor \frac a c \rfloor = \lfloor \frac b d \rfloor$$ we have
+
+$$
+\frac {a - c \lfloor \frac a c \rfloor + (b - d \lfloor \frac b d \rfloor)n} {c + dx}
+\end{align}
+$$
+
+If we realize that $$a - c \lfloor \frac a c \rfloor$$ is another way to say the remainder after dividing $$a$$ by $$c$$, we can simplify the division and remainder operations by taking advantage of `BigInteger.DivRem`.
+
+```csharp
+    while  (!c.IsZero && !d.IsZero && places > 0)
+    {
+        // Compute the two quotients and remainders.
+        var m = BigInteger.DivRem(a, c, out var r);
+        var n = BigInteger.DivRem(b, d, out var s);
+        
+        // If the quotients aren't the same we don't know the digit yet.
+        if (m != n)
+            break;
+            
+        // Write the digit. 
+        writer.Write((int)n);
+        places--;
+        
+        // Take the remainder and multiply by 10 again to set up for next digit.
+        a = r * 10;
+        b = s * 10;
+    }
+```
