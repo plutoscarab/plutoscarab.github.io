@@ -145,10 +145,12 @@ public static IEnumerable<BigInteger> Negate(IEnumerable<BigInteger> terms)
     
     if (arr[1] == BigInteger.One)
     {
-        return new[] { -arr[0] - BigInteger.One, arr[2] + BigInteger.One }.Concat(terms.Skip(3));
+        return new[] { -arr[0] - BigInteger.One, arr[2] + BigInteger.One }
+            .Concat(terms.Skip(3));
     }
     
-    return new[] { -arr[0] - BigInteger.One, BigInteger.One, arr[1] - BigInteger.One }.Concat(terms.Skip(2));
+    return new[] { -arr[0] - BigInteger.One, BigInteger.One, 
+        arr[1] - BigInteger.One }.Concat(terms.Skip(2));
 }
 
 public static void Write(IEnumerable<BigInteger> terms, int places, TextWriter writer)
