@@ -165,7 +165,7 @@ public static void Write(IEnumerable<BigInteger> terms, int places,
     if (terms.First().Sign < 0)
     {
         writer.Write('-');
-        Write(Negate(terms), place, writer);
+        Write(Negate(terms), places, writer);
         return;
     }
     
@@ -226,13 +226,25 @@ So we just need to maintain four variables, and to consume one term of $$x$$ we 
 ```csharp
 BigInteger a = 0, b = 10, c = 1, d = 0;
 
-foreach (var term in terms.Skip(1))
+foreach (var term in terms)
 {
     (a, b) = (b, a + b * term);
     (c, d) = (d, c + d * term);
 ```
 
 We're using `BigInteger` because these values can grow arbitrarily large.
+
+But one tweak we need to make is that we've already written out the first term as the integer part of the value, so we need to skip it. But to get the right result for the fractional part, we need to compute the rest of the value assuming the first term was zero. In other words, we can't just emit the digits of [2; 3, 4], we need to emit the digits of [0; 2, 3, 4]. The digits are completely different. So we'll skip the first term but initialize our four variables with what they would have been had we consumed a zero at the start of the sequence.
+
+```csharp
+BigInteger a = 10, b = 0, c = 0, d = 1;
+
+foreach (var term in terms.Skip(1))
+{
+    (a, b) = (b, a + b * term);
+    (c, d) = (d, c + d * term);
+```
+
 
 To determine the next digit to write, we need to know the integer portion of $$f(x)$$. If all we know is that $$x$$ isn't negative (we actually know more than that, but we don't need to), then we know that
 
@@ -285,7 +297,7 @@ If the continued fraction terminates and we run out of terms, we might have more
 ```csharp
 } // done with terms
 
-while (!d.IsZero && places > 0)
+while (!b.IsZero && !d.IsZero && places > 0)
 {
     var n = BigInteger.DivRem(b, d, out var s);
     writer.Write((int)n);
