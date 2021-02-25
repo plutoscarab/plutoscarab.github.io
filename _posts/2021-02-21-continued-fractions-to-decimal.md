@@ -279,3 +279,17 @@ If we realize that $$a - c \lfloor \frac a c \rfloor$$ is another way to say the
         b = s * 10;
     }
 ```
+
+If the continued fraction terminates and we run out of terms, we might have more digits to emit. In this case we pretend that the rest of the terms are infinite (which doesn't affect the value since $$1/\inf=0$$), so we can ignore the $$a$$ and $$c$$ values and just deal with $$b$$ and $$d$$.
+
+```csharp
+} // done with terms
+
+while (!d.IsZero && places > 0)
+{
+    var n = BigInteger.DivRem(b, d, out var s);
+    writer.Write((int)n);
+    places--;
+    b = s * 10;
+}
+```
