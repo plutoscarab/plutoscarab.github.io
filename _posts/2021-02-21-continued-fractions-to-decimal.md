@@ -153,7 +153,8 @@ public static IEnumerable<BigInteger> Negate(IEnumerable<BigInteger> terms)
         arr[1] - BigInteger.One }.Concat(terms.Skip(2));
 }
 
-public static void Write(IEnumerable<BigInteger> terms, int places, TextWriter writer)
+public static void Write(IEnumerable<BigInteger> terms, int places, 
+    TextWriter writer)
 {
     if (!terms.Any())
     {
@@ -247,13 +248,13 @@ $$
 \begin{align}
 \frac {a+bx} {c+dx} - n &= \frac {a+bx} {c+dx} - \frac {n(c+dx)} {c+dx}  \\
 &= \frac {a - cn + (b-dn)x} {c+dx}
+\end{align}
 $$
 
 But because $$n = \lfloor \frac a c \rfloor = \lfloor \frac b d \rfloor$$ we have
 
 $$
 \frac {a - c \lfloor \frac a c \rfloor + (b - d \lfloor \frac b d \rfloor)n} {c + dx}
-\end{align}
 $$
 
 If we realize that $$a - c \lfloor \frac a c \rfloor$$ is another way to say the remainder after dividing $$a$$ by $$c$$, we can simplify the division and remainder operations by taking advantage of `BigInteger.DivRem`.
