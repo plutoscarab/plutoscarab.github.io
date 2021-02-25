@@ -226,7 +226,7 @@ So we just need to maintain four variables, and to consume one term of $$x$$ we 
 ```csharp
 BigInteger a = 0, b = 10, c = 1, d = 0;
 
-foreach (var term in terms)
+foreach (var term in terms.Skip(1))
 {
     (a, b) = (b, a + b * term);
     (c, d) = (d, c + d * term);
