@@ -89,36 +89,36 @@ Negation first. In simple continued fractions only $$t_0$$ can be negative. All 
 
 $$
 \begin{align}
-x &= t_0 + \cfrac 1 y \\
-&= t_0 - 1 + 1 + \cfrac 1 y \\
+-x &= -t_0 - \cfrac 1 y \\
+&= -t_0 - 1 + 1 - \cfrac 1 y \\
 \end{align}
 $$
 
 It's easy to show that
 
 $$
-1 + \cfrac 1 y = \cfrac 1 {1 + \cfrac 1 {y - 1}}
+1 - \cfrac 1 y = \cfrac 1 {1 + \cfrac 1 {y - 1}}
 $$
 
 so that
 
 $$
 \begin{align}
-x &= t_0 - 1 + \cfrac 1 {1 + \cfrac 1 {y - 1}}
-&= [t_0 - 1, 1, y - 1]
-&= [t_0 - 1, 1, t_1 - 1, t_2, \cdots]
+-x &= -t_0 - 1 + \cfrac 1 {1 + \cfrac 1 {y - 1}} \\
+&= [-t_0 - 1, 1, y - 1] \\
+&= [-t_0 - 1, 1, t_1 - 1, t_2, \cdots]
 $$
 
-Now if $$t_1 = 1$$ then then $$t_1 - 1$$ term becomes zero, and we don't allow terms that aren't positive. In that case we can use the identity
+Now if $$t_1 = 1$$ then the $$t_1 - 1$$ term becomes zero, and we don't allow fraction terms that aren't positive. In that case we can use the identity
 
 $$
 [\cdots, a, 0, b, \cdots] = [\cdots, a + b, \cdots]
 $$
 
-to arrive at
+to eliminate the zero and arrive at
 
 $$
-x = [t_0 - 1, t_2 + 1, \cdots]
+-x = -[t_0 - 1, t_2 + 1, t_3, \cdots]
 $$
 
 for the $$t_1 = 1$$ case.
