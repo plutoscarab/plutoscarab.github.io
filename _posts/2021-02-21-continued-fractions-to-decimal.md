@@ -86,7 +86,7 @@ static void Main(string[] args)
 
 To get this to work with continued fractions, we need to be able to extract the integer portion of the value (which is easy), to negate the value (which is not too hard), and to be able to multiply by 10 which is not nearly as easy as it sounds. 
 
-#Negating a continued fraction
+# Negating a continued fraction
 
 In simple continued fractions only $$t_0$$ can be negative. All the other terms $$t_1, t_2, \dots$$ are assumed to be strictly positive. Let's think of our continued fraction $$x = [t_0; t_1, t_2, \cdots]$$ as $$x = t_0 + \frac 1 y$$ where $$y = [t_1; t_2, t_3, \cdots]$$.
 
@@ -126,7 +126,7 @@ $$
 
 for the $$t_1 = 1$$ case.
 
-#Multiplying by 10
+# Multiplying by 10
 
 Consider the continued fraction $$[1; 2, 3, 4]$$ which is short-hand for
 
