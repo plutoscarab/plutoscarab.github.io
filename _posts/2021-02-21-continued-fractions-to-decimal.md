@@ -224,12 +224,12 @@ $$
 So we just need to maintain four variables, and to consume one term of $$x$$ we can just do
 
 ```csharp
-BigInteger a = 0, b = 10, c = 1, d = 0;
+    BigInteger a = 0, b = 10, c = 1, d = 0;
 
-foreach (var term in terms)
-{
-    (a, b) = (b, a + b * term);
-    (c, d) = (d, c + d * term);
+    foreach (var term in terms)
+    {
+        (a, b) = (b, a + b * term);
+        (c, d) = (d, c + d * term);
 ```
 
 We're using `BigInteger` because these values can grow arbitrarily large.
@@ -237,12 +237,12 @@ We're using `BigInteger` because these values can grow arbitrarily large.
 But one tweak we need to make is that we've already written out the first term as the integer part of the value, so we need to skip it. But to get the right result for the fractional part, we need to compute the rest of the value assuming the first term was zero. In other words, we can't just emit the digits of [2; 3, 4], we need to emit the digits of [0; 2, 3, 4]. The digits are completely different. So we'll skip the first term but initialize our four variables with what they would have been had we consumed a zero at the start of the sequence. We also want to break out of the loop once we've written enough decimal digits.
 
 ```csharp
-BigInteger a = 10, b = 0, c = 0, d = 1;
+    BigInteger a = 10, b = 0, c = 0, d = 1;
 
-foreach (var term in terms.Skip(1).TakeWhile(_ => places > 0))
-{
-    (a, b) = (b, a + b * term);
-    (c, d) = (d, c + d * term);
+    foreach (var term in terms.Skip(1).TakeWhile(_ => places > 0))
+    {
+        (a, b) = (b, a + b * term);
+        (c, d) = (d, c + d * term);
 ```
 
 
@@ -272,36 +272,76 @@ $$
 If we realize that $$a - c \lfloor \frac a c \rfloor$$ is another way to say the remainder after dividing $$a$$ by $$c$$, we can simplify the division and remainder operations by taking advantage of `BigInteger.DivRem`.
 
 ```csharp
-    while  (!c.IsZero && !d.IsZero && places > 0)
-    {
-        // Compute the two quotients and remainders.
-        var m = BigInteger.DivRem(a, c, out var r);
-        var n = BigInteger.DivRem(b, d, out var s);
-        
-        // If the quotients aren't the same we don't know the digit yet.
-        if (m != n)
-            break;
-            
-        // Write the digit. 
-        writer.Write((int)n);
-        places--;
-        
-        // Take the remainder and multiply by 10 again to set up for next digit.
-        a = r * 10;
-        b = s * 10;
-    }
+        while  (!c.IsZero && !d.IsZero && places > 0)
+        {
+            // Compute the two quotients and remainders.
+            var m = BigInteger.DivRem(a, c, out var r);
+            var n = BigInteger.DivRem(b, d, out var s);
+
+            // If the quotients aren't the same we don't know the digit yet.
+            if (m != n)
+                break;
+
+            // Write the digit. 
+            writer.Write((int)n);
+            places--;
+
+            // Take the remainder and multiply by 10 again to set up for next digit.
+            a = r * 10;
+            b = s * 10;
+        }
 ```
 
 If the continued fraction terminates and we run out of terms, we might have more digits to emit. In this case we pretend that the rest of the terms are infinite (which doesn't affect the value since $$1/\infty=0$$), so we can ignore the $$a$$ and $$c$$ values and just deal with $$b$$ and $$d$$.
 
 ```csharp
-} // done with terms
+    } // done with terms
 
-while (!b.IsZero && !d.IsZero && places > 0)
+    while (!b.IsZero && !d.IsZero && places > 0)
+    {
+        var n = BigInteger.DivRem(b, d, out var s);
+        writer.Write((int)n);
+        places--;
+        b = s * 10;
+    }
+} // end of Write
+```
+
+Now we can try it out with some well-known continued fractions.
+
+```csharp
+static void Main(string[] args)
 {
-    var n = BigInteger.DivRem(b, d, out var s);
-    writer.Write((int)n);
-    places--;
-    b = s * 10;
+    // 355/113
+    Write(new BigInteger[] { 3, 7, 16 }, 10, Console.Out);
+    Console.WriteLine();
+
+    // -1/3
+    Write(new BigInteger[] { -1, 1, 2 }, 10, Console.Out);
+    Console.WriteLine();
+
+    // 1/2
+    Write(new BigInteger[] { 0, 2 }, 10, Console.Out);
+    Console.WriteLine();
+
+    // golden ratio (1+sqrt(5))/2 to 100 decimal places
+    Write(Enumerable.Repeat(BigInteger.One, int.MaxValue), 100, Console.Out);
+    Console.WriteLine();
+
+    // e to 1000 decimal places
+    Write(new BigInteger[] { 2 }.Concat(from i in Enumerable.Range(1, int.MaxValue / 2)
+                                        from j in new[] { 1, 2 * i, 1 }
+                                        select (BigInteger)j), 1000, Console.Out);
+    Console.WriteLine();
 }
+```
+
+This produces the following console output.
+
+```
+3.1415929203
+-0.3333333333
+0.5
+1.6180339887498948482045868343656381177203091798057628621354486227052604628189024497072072041893911374
+2.7182818284590452353602874713526624977572470936999595749669676277240766303535475945713821785251664274274663919320030599218174135966290435729003342952605956307381323286279434907632338298807531952510190115738341879307021540891499348841675092447614606680822648001684774118537423454424371075390777449920695517027618386062613313845830007520449338265602976067371132007093287091274437470472306969772093101416928368190255151086574637721112523897844250569536967707854499699679468644549059879316368892300987931277361782154249992295763514822082698951936680331825288693984964651058209392398294887933203625094431173012381970684161403970198376793206832823764648042953118023287825098194558153017567173613320698112509961818815930416903515988885193458072738667385894228792284998920868058257492796104841984443634632449684875602336248270419786232090021609902353043699418491463140934317381436405462531520961836908887070167683964243781405927145635490613031072085103837505101157477041718986106873969655212671546889570350354
 ```
