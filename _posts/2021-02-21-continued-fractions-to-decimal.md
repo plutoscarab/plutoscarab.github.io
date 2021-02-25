@@ -168,11 +168,17 @@ public static void Write(IEnumerable<BigInteger> terms, int places, TextWriter w
         return;
     }
     
-    if (terms.Take(2).Count() == 1 && terms.First().IsZero)
+    // Write the integer portion.
+    writer.Write(terms.First());
+    
+    // We're done if there is no fractional part.
+    if (terms.Take(2).Count() == 1)
     {
-        writer.Write('0');
         return;
     }
+    
+    // Now we're ready to do the decimal fraction part.
+    writer.Write('.');
 ```
 
 ## Multiplying by 10
