@@ -16,7 +16,7 @@ public static void Write(double x, int places, TextWriter writer)
 {
 ```
 
-Our method will take a `double` value and write it to the provided `TextWriter` with the specified number of decimal places of precision. Later we'll also want to be able to control the number of decimal places and specify number format properties for globalization, but let's start with something simple.
+Our method will take a `double` value and write it to the provided `TextWriter` with the specified number of decimal places of precision. Later we'll also want to be able to specify number format properties for globalization, but let's start with something simple.
 
 First let's handle negative numbers and zeros. We'll ignore argument validation such as null checking for now.
 
@@ -35,7 +35,7 @@ First let's handle negative numbers and zeros. We'll ignore argument validation 
     }
 ```
 
-Next we'll write out the integer portion, to the left of the decimal point. This implementation doesn't handle the "e" exponent notation so it will mess up numbers that are too large or too small, but this is just to show the general idea.
+Next we'll write out the integer portion, to the left of the decimal point. This implementation doesn't handle the "e" exponent notation like `1.1e37` so it will mess up numbers that are too large or too small, but this is just to show the general idea.
     
 ```csharp
     var n = Math.Floor(x);
@@ -83,7 +83,47 @@ static void Main(string[] args)
 3.1415926535
 ```
 
-To get this to work with continued fractions, we need to be able to extract the integer portion of the value (which is easy) and to be able to multiply by 10 which is not nearly as easy as it sounds. Consider the continued fraction $$[1; 2, 3, 4]$$ which is short-hand for
+To get this to work with continued fractions, we need to be able to extract the integer portion of the value (which is easy), to negate the value (which is not too hard), and to be able to multiply by 10 which is not nearly as easy as it sounds. 
+
+Negation first. In simple continued fractions only $$t_0$$ can be negative. All the other terms $$t_1, t_2, \dots$$ are assumed to be strictly positive. Let's think of our continued fraction $$x = [t_0; t_1, t_2, \cdots]$$ as $$x = t_0 + \frac 1 y$$ where $$y = [t_1; t_2, t_3, \cdots]$$.
+
+$$
+\begin{align}
+x &= t_0 + \cfrac 1 y \\
+&= t_0 - 1 + 1 + \cfrac 1 y \\
+\end{align}
+$$
+
+It's easy to show that
+
+$$
+1 + \cfrac 1 y = \cfrac 1 {1 + \cfrac 1 {y - 1}}
+$$
+
+so that
+
+$$
+\begin{align}
+x &= t_0 - 1 + \cfrac 1 {1 + \cfrac 1 {y - 1}}
+&= [t_0 - 1, 1, y - 1]
+&= [t_0 - 1, 1, t_1 - 1, t_2, \cdots]
+$$
+
+Now if $$t_1 = 1$$ then then $$t_1 - 1$$ term becomes zero, and we don't allow terms that aren't positive. In that case we can use the identity
+
+$$
+[\cdots, a, 0, b, \cdots] = [\cdots, a + b, \cdots]
+$$
+
+to arrive at
+
+$$
+x = [t_0 - 1, t_2 + 1, \cdots]
+$$
+
+for the $$t_1 = 1$$ case.
+
+Consider the continued fraction $$[1; 2, 3, 4]$$ which is short-hand for
 
 $$
 1 + \cfrac 1 {2 + \cfrac 1 {3 + \cfrac 1 4}} = \frac {43} {30} \approx 1.43333
