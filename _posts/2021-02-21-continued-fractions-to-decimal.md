@@ -254,7 +254,7 @@ $$
 But because $$n = \lfloor \frac a c \rfloor = \lfloor \frac b d \rfloor$$ we have
 
 $$
-\frac {a - c \lfloor \frac a c \rfloor + (b - d \lfloor \frac b d \rfloor)n} {c + dx}
+\frac {a - c \lfloor \frac a c \rfloor + (b - d \lfloor \frac b d \rfloor)x} {c + dx}
 $$
 
 If we realize that $$a - c \lfloor \frac a c \rfloor$$ is another way to say the remainder after dividing $$a$$ by $$c$$, we can simplify the division and remainder operations by taking advantage of `BigInteger.DivRem`.
@@ -280,7 +280,7 @@ If we realize that $$a - c \lfloor \frac a c \rfloor$$ is another way to say the
     }
 ```
 
-If the continued fraction terminates and we run out of terms, we might have more digits to emit. In this case we pretend that the rest of the terms are infinite (which doesn't affect the value since $$1/\inf=0$$), so we can ignore the $$a$$ and $$c$$ values and just deal with $$b$$ and $$d$$.
+If the continued fraction terminates and we run out of terms, we might have more digits to emit. In this case we pretend that the rest of the terms are infinite (which doesn't affect the value since $$1/\infty=0$$), so we can ignore the $$a$$ and $$c$$ values and just deal with $$b$$ and $$d$$.
 
 ```csharp
 } // done with terms
