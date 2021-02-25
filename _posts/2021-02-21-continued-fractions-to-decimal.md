@@ -108,7 +108,7 @@ so that
 $$
 \begin{align}
 -x &= -t_0 - 1 + \cfrac 1 {1 + \cfrac 1 {y - 1}} \\
-&= [-t_0 - 1, 1, t_1 - 1, t_2, \cdots]
+&= [-t_0 - 1; 1, t_1 - 1, t_2, \cdots]
 \end{align}
 $$
 
@@ -121,7 +121,7 @@ $$
 to eliminate the zero and arrive at
 
 $$
--x = -[t_0 - 1, t_2 + 1, t_3, \cdots]
+-x = [-t_0 - 1; t_2 + 1, t_3, \cdots]
 $$
 
 for the $$t_1 = 1$$ case. 
