@@ -348,6 +348,6 @@ This produces the following console output.
 
 ## Links
 
-* [Continued Fraction Arithmetic, by Bill Gosper](https://perl.plover.com/yak/cftalk/INFO/gosper.txt)
+* [Continued Fraction Arithmetic, Bill Gosper](https://perl.plover.com/yak/cftalk/INFO/gosper.txt)
 * [Continued fraction, Wikipedia](https://en.wikipedia.org/wiki/Continued_fraction)
 * [Numbers and Functions as Continued Fractions, Numericana](https://www.numericana.com/answer/fractions.htm)
