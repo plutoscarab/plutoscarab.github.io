@@ -153,7 +153,7 @@ a general-purpose C# function for $$f(x)$$.
     }
 ```
 
-And then we can generate the terms for $$pi$$.
+And then we can generate the terms for $$\pi$$.
 
 ```csharp
         var pi = Transform(fourOverPi, 4, 0, 0, 1);
