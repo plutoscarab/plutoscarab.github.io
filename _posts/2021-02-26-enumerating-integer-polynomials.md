@@ -9,7 +9,7 @@ prove that and I'll show you how to enumerate them in C# using the idea from tha
 
 The method involves assigning a score to a polynomial equal to the sum of the absolute values of the coefficients
 plus the degree of the polynomial. For example the score for $$n^4 - 3n^2 + 5$$ is 13 because $$13=4+\left|1\right|+\left|-3\right|+\left|5\right|$$.
-We just have to enumerate the polynomials with each score starting with zero.
+We just have to enumerate the polynomials with each score starting with one.
 
 We'll represent a polynomial of degree n as an integer array of length n + 1. The element at index k represents
 the coefficient of degree k. So the polynomial above is represented by the array [5, 0, -3, 0, 1]. We'll ignore
