@@ -34,9 +34,20 @@ have two sequences $$t_i$$ and $$u_i$$ and $$x=t_0+\frac {u_0} y$$. Plugging thi
 
 $$
 \begin{align}
-f(x) &= \frac {a + b(t_0 + \frac {u_0) y)} {c + d(t_0 + \frac {u_0} y)} \\
+f(x) &= \frac {a + b(t_0 + \frac {u_0} y)} {c + d(t_0 + \frac {u_0} y)} \\
 &= \frac {ay + b(t_0y + u_0)} {cy + d(t_0y + u_0)} \\
-&= \frac {u_0b + (a+t_0b)y} {u_0d + (c+t_0)y}
+&= \frac {u_0b + (a+t_0b)y} {u_0d + (c+t_0d)y}
+\end{align}
+$$
+
+This transforms the state variables in the following way:
+
+$$
+\begin{align}
+a &\to u_0b \\
+b &\to a+t_0b \\
+c &\to u_0d \\
+d &\to c+t_0d 
 \end{align}
 $$
 
