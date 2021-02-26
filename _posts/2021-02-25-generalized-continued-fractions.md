@@ -106,7 +106,7 @@ We can try it out for $$\frac 4 \pi$$.
     }
 ```
 
-This produces the following output, which is correct!
+This produces the following output, which is [correct](http://oeis.org/A088538)!
 
 ```
 1.27323954473516268615107010698011489627567716592365
@@ -166,7 +166,7 @@ And then we can generate the terms for $$\pi$$.
         Console.WriteLine();
 ```
 
-which produces
+which produces [A001203](http://oeis.org/A001203):
 
 ```
 3 7 15 1 292 1 1 1 2 1 3 1 14 2 1 1 2 2 2 2 1 84 2 1 1 15 3 13 1 4 2 6 6 99 
