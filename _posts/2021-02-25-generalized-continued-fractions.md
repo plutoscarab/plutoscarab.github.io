@@ -3,7 +3,7 @@ title: Converting Generalized Continued Fractions to Simple Continued Fractions 
 tags: [math, C#]
 ---
 
-In the [last post](2021-02-21-continued-fractions-to-decimal) I showed how to convert a continued fraction of the form
+In the [last post](/2021/02/21/continued-fractions-to-decimal) I showed how to convert a continued fraction of the form
 
 $$
 x = t_0 + \cfrac 1 {t_1 + \cfrac 1 {t_2 + \cfrac 1 {t_3 + \cdots}}}
