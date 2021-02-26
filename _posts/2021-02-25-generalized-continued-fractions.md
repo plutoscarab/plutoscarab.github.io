@@ -51,3 +51,63 @@ d &\to c+t_0d
 \end{align}
 $$
 
+When we wanted to generate decimal digits, we repeatedly subtracted the integer part of the value and multiplied by 10. Instead, we want to extract
+the simple continued fraction terms, so we'll repeatedly subtract the integer part of the value and then take the reciprocal. Here's the final result.
+
+```csharp
+    public static IEnumerable<BigInteger> Simplify(
+        IEnumerable<BigInteger> ts,
+        IEnumerable<BigInteger> us)
+    {
+        BigInteger a = 0, b = 1, c = 1, d = 0;
+        using (var e = us.GetEnumerator())
+        {
+            foreach (var t in ts)
+            {
+                var u = e.MoveNext() ? e.Current : BigInteger.One;
+                (a, b) = (u * b, a + t * b);
+                (c, d) = (u * d, c + t * d);
+
+                while (!c.IsZero && !d.IsZero)
+                {
+                    var m = BigInteger.DivRem(a, c, out var r);
+                    var n = BigInteger.DivRem(b, d, out var s);
+
+                    if (m != n)
+                        break;
+
+                    yield return n;
+                    (a, c) = (c, r);
+                    (b, d) = (d, s);
+                }
+            }
+
+            while (!b.IsZero && !d.IsZero)
+            {
+                var n = BigInteger.DivRem(b, d, out var s);
+                yield return n;
+                (b, d) = (d, s);
+            }
+        }
+    }
+```
+
+We can try it out for $$\frac 4 \pi$$.
+
+```csharp
+    static void Main(string[] args)
+    {
+        BigInteger two = 2;
+        var odds = Enumerable.Range(0, int.MaxValue).Select(i => two * i + 1);
+        var squares = Enumerable.Range(1, int.MaxValue).Select(i => i * (BigInteger)i);
+        var fourOverPi = Simplify(odds, squares);
+        Write(fourOverPi, 50, Console.Out);
+        Console.WriteLine();
+    }
+```
+
+This produces the following output, which is correct!
+
+```
+1.27323954473516268615107010698011489627567716592365
+```
