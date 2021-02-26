@@ -39,3 +39,4 @@ f(x) &= \frac {a + b(t_0 + \frac {u_0) y)} {c + d(t_0 + \frac {u_0} y)} \\
 &= \frac {u_0b + (a+t_0b)y} {u_0d + (c+t_0)y}
 \end{align}
 $$
+
