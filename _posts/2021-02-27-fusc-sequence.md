@@ -1,5 +1,5 @@
 ---
-title: Fusc Sequence as Recursive Iterator in C#
+title: Fusc and Ruler Sequences as Recursive Iterators in C#
 tags: [ math, C# ]
 ---
 
@@ -92,5 +92,53 @@ IEnumerable<(int, int)> AllRationals()
 This is the depth-first traversal of the [Calkin-Wilf tree](https://en.wikipedia.org/wiki/Calkin%E2%80%93Wilf_tree)
 which starts like this:
 
-1/1 1/2 2/1 1/3 3/2 2/3 3/1 1/4 4/3 3/5 5/2 2/5 5/3 3/4 4/1 1/5 5/4 4/7 7/3 3/8 
+1/1, 1/2, 2/1, 1/3, 3/2, 2/3, 3/1, 1/4, 4/3, 3/5, 5/2, 2/5, 5/3, 3/4, 4/1, 1/5, 5/4, 4/7, 7/3, 3/8 
 
+## Ruler Sequence
+
+Another sequence that is easy to generate using a recursive iterator is the
+[ruler sequence](https://oeis.org/A007814) which looks like
+
+0 1 0 2 0 1 0 3 0 1 0 2 0 1 0 4 0 1 0 2 0 1 0 3 0 1 0 2 0 1 0 5 0
+
+You can see that it is recursive if you add 1 to each term and then precede
+each term with a 0. So this is even easier to implement than fusc. We still
+need to prime the pump by hard-coding the first term.
+
+```csharp
+IEnumerable<int> Ruler()
+{
+    yield return 0;
+
+    foreach (var n in Ruler())
+    {
+        yield return n + 1;
+        yield return 0;
+    }
+}
+```
+
+There are a number of uses for this. One that is interesting to me is its
+use in generating [low-discrepency sequences](https://en.wikipedia.org/wiki/Low-discrepancy_sequence)
+such as [Sobol sequences](https://en.wikipedia.org/wiki/Sobol_sequence) and
+[Van der Corput sequences](https://en.wikipedia.org/wiki/Van_der_Corput_sequence),
+which are useful in numerical sampling and integration.
+
+```csharp
+IEnumerable<double> VanDerCorput()
+{
+    var bits = 0ul;
+    var scale = Math.Pow(2.0, -64);
+
+    foreach (var r in Ruler())
+    {
+        bits ^= 1ul << (63 - r);
+        yield return bits * scale;
+    }
+}
+```
+
+which produces
+
+0.5, 0.75, 0.25, 0.375, 0.875, 0.625, 0.125, 0.1875, 0.6875, 0.9375, 0.4375, 0.3125, 0.8125, 0.5625, 
+0.0625, 0.09375, 0.59375, 0.84375, 0.34375, 0.46875, ...
