@@ -12,6 +12,7 @@ P &= \sum_{i=0}^{i\le deg(P)}a_i x^i
 \end{align}
 $$
 
+Only polynomials up to degree 6 are included.
 Some polynomials producing negative fractional terms are excluded.
 
 * [Polynomials from 1 through 5𝑛⁶ with scores up to 12](polycf1.html)
