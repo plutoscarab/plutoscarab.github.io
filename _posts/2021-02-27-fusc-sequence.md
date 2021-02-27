@@ -70,8 +70,8 @@ IEnumerable<int> Fusc()
 }
 ```
 
-This still does recursion, but it's much more efficient that enumerating fusc(n) for increasing
-values of n. It's pretty efficient overall, and certainly a lot simpler that other methods.
+This still does recursion, but it's much more efficient than enumerating fusc(n) for increasing
+values of n. It's pretty efficient overall, and certainly a lot simpler than other methods.
 
 You can use this sequence to generate all positive rational numbers, in reduced form and without
 duplicates:
@@ -89,5 +89,8 @@ IEnumerable<(int, int)> AllRationals()
 }
 ```
 
-This is the depth-first traversal of the [Calkin-Wilf tree](https://en.wikipedia.org/wiki/Calkin%E2%80%93Wilf_tree).
+This is the depth-first traversal of the [Calkin-Wilf tree](https://en.wikipedia.org/wiki/Calkin%E2%80%93Wilf_tree)
+which starts like this:
+
+1/1 1/2 2/1 1/3 3/2 2/3 3/1 1/4 4/3 3/5 5/2 2/5 5/3 3/4 4/1 1/5 5/4 4/7 7/3 3/8 
 
