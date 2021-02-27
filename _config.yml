@@ -3,4 +3,5 @@ enable_mathjax: true
 kramdown:
   math_engine: mathjax
 site:
-  author: Bret Mulvey
+  title: PlutoScarab
+  description: Programming and math blog
