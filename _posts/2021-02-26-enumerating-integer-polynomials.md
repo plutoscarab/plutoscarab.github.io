@@ -238,5 +238,3 @@ This produces
 𝑛⁴
 −𝑛⁴
 ```
-
-I combined this with the continued fraction code from earlier posts to produce [this](/polycf/) table of values.
