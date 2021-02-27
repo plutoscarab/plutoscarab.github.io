@@ -1,3 +1,17 @@
+Links to pages with values computed to 25 decimal places of continued fractions with terms that are polynomial in their index.
+These are intended for people to find by search engine if they have a value and they're wondering if there's an expression that
+explains it. Some of these are in [OEIS](https://oeis.org) but many are not.
+
+There are 10,000 polynomials per page, sorted by absolute value of highest-degree coefficients within each page. Polynomials are
+generated in "score" order before being grouped into pages. The score of a polynomial is
+
+$$
+\begin{align}
+score&=deg(P) + \sum_{i=0}^{i\le deg(P)} \left|a_i\right| \\
+P &= \sum_{i=0}^{i\le deg(P)}a_i x^i
+\end{align}
+$$
+
 * [Polynomials from 1 through 5𝑛⁶ with scores up to 12](polycf1.html)
 * [Polynomials from 13 through 6𝑛⁶ with scores up to 13](polycf2.html)
 * [Polynomials from 14 through 7𝑛⁶ with scores up to 14](polycf3.html)
