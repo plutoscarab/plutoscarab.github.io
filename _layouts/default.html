@@ -29,7 +29,10 @@
             <li class="downloads"><a href="{{ site.github.tar_url }}">TAR</a></li>
             <li class="title">DOWNLOADS</li>
           {% endif %}
-          {% include share-bar.html %}
+          <li class="fork"><a href="https://www.facebook.com/sharer/sharer.php?u={{ site.url }}{{ site.baseurl }}{{ page.url }}">Facebook</a></li>
+          <li class="fork"><a href="https://twitter.com/intent/tweet?text={{ page.title }}&url={{ site.url }}{{ site.baseurl }}{{ page.url }}">Twitter</a></li>
+          <li class="fork"><a href="https://www.tumblr.com/share/link?url={{ site.url }}{{ site.baseurl }}{{ page.url }}">Tumblr</a></li>
+          <li class="fork"><a href="http://www.reddit.com/submit?url={{ site.url }}{{ site.baseurl }}{{ page.url }}">Reddit</a></li>
         </nav>
       </div><!-- end header -->
 
