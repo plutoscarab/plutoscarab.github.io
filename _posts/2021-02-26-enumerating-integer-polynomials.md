@@ -36,7 +36,7 @@ IEnumerable<int[]> PolysWithScore(int score) =>
 
 To implement `PolysWithTotalAndDegree` we can implement a recursive function. First we emit the monomials
 with the specified degree with the coefficient equal to the positive and negative total, and then we
-emit all the polynomials of lower degrees for each lesser total and to each of those polynomaisl we
+emit all the polynomials of lower degrees for each lesser total and to each of those polynomials we
 add the max-degree term with the coefficient equal to whatever is left over from the total.
 
 ```csharp
