@@ -238,3 +238,6 @@ This produces
 𝑛⁴
 −𝑛⁴
 ```
+
+I used this and results from earlier posts to product [this table](/polygcf) 
+of values of generalized continued fractions with polynomial terms.
