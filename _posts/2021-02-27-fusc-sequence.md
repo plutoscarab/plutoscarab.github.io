@@ -125,7 +125,7 @@ such as [Sobol sequences](https://en.wikipedia.org/wiki/Sobol_sequence) and
 which are useful in numerical sampling and integration.
 
 ```csharp
-IEnumerable<double> VanDerCorput()
+IEnumerable<double> Sobol()
 {
     var bits = 0ul;
     var scale = Math.Pow(2.0, -64);
