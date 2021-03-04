@@ -1,0 +1,413 @@
+<#@ template language="C#" #>
+<#@ output extension=".cs" encoding="utf-8" #>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Text;
+
+namespace PlutoScarab
+{
+<#
+Poly("int", "I");
+Poly("long", "L");
+Poly("BigInteger", "B");
+#>
+}
+<#+
+void Poly(string type, string suffix)
+{
+    var name = "Poly" + suffix;
+#>
+
+    public struct <#= name #> : IEquatable<<#= name #>>
+    {
+        public static readonly <#= name #> Zero = new <#= name #>(new <#= type #>[0], true);
+
+        private readonly <#= type #>[] coeffs;
+
+        public <#= name #>(params <#= type #>[] coeffs)
+        : this((<#= type #>[])coeffs.Clone(), true)
+        {
+        }
+
+        private <#= name #>(<#= type #>[] coeffs, bool noCopy)
+        {
+            var i = coeffs.Length - 1;
+
+            while (i >= 0 && coeffs[i] == 0)
+            {
+                i--;
+            }
+
+            if (i < coeffs.Length - 1)
+            {
+                Array.Resize(ref coeffs, i + 1);
+            }
+
+            this.coeffs = coeffs;
+        }
+
+        private int Length => coeffs?.Length ?? 0;
+        
+        private <#= type #> this[int index]
+        {
+            get { return coeffs[index]; }
+            set { coeffs[index] = value; }
+        }
+
+        private <#= type #>[] Copy() => coeffs == null ? new <#= type #>[0] : (<#= type #>[])coeffs.Clone();
+
+        public static <#= name #> operator +(<#= name #> p) => p;
+
+        public static <#= name #> operator -(<#= name #> p)
+        {
+            var q = p.Copy();
+            for (var i = 0; i < q.Length; i++) q[i] = -q[i];
+            return new <#= name #>(q, true);
+        }
+
+        public static <#= name #> operator +(<#= name #> p, <#= name #> q)
+        {
+            <#= type #>[] r;
+
+            if (p.Length >= q.Length)
+            {
+                r = p.Copy();
+                for (var i = 0; i < q.Length; i++) r[i] += q[i];
+            }
+            else
+            {
+                r = q.Copy();
+                for (var i = 0; i < p.Length; i++) r[i] += p[i];
+            }
+
+            return new <#= name #>(r, true);
+        }
+
+        public static <#= name #> operator -(<#= name #> p, <#= name #> q)
+        {
+            var r = p.Copy();
+            if (p.Length < q.Length) Array.Resize(ref r, q.Length);
+            for (var i = 0; i < q.Length; i++) r[i] -= q[i];
+            return new <#= name #>(r, true);
+        }
+
+        public static <#= name #> operator *(<#= name #> p, <#= name #> q)
+        {
+            var r = new <#= type #>[p.Length + q.Length - 1 ];
+
+            for (var i = 0; i < p.Length; i++)
+            {
+                if (p[i] == 0)
+                    continue;
+
+                for (var j = 0; j < q.Length; j++)
+                {
+                    r[i + j] += p[i] * q[j];
+                }
+            }
+
+            return new <#= name #>(r, true);
+        }
+
+        public static <#= name #> operator +(<#= name #> p, <#= type #> q)
+        {
+            var r = p.Copy();
+            r[0] += q;
+            return new <#= name #>(r, true);
+        }
+
+        public static <#= name #> operator +(<#= type #> p,  <#= name #> q) =>
+            q + p;
+
+        public static <#= name #> operator -(<#= name #> p, <#= type #> q)
+        {
+            var r = p.Copy();
+            r[0] -= q;
+            return new <#= name #>(r, true);
+        }
+
+        public static <#= name #> operator -(<#= type #> p, <#= name #> q) =>
+            (-q) + p;
+
+        public static <#= name #> operator *(<#= type #> p, <#= name #> q)
+        {
+            var r = q.Copy();
+            for (var i = 0; i < r.Length; i++) r[i] *= p;
+            return new <#= name #>(r, true);
+        }
+
+        public static <#= name #> operator /(<#= name #> p, <#= type #> q)
+        {
+            var r = p.Copy();
+            for (var i = 0; i < r.Length; i++) r[i] /= q;
+            return new <#= name #>(r, true);
+        }
+
+        public static <#= name #> operator *(<#= name #> p, <#= type #> q) =>
+            q * p;
+
+        public override string ToString()
+        {
+            if (coeffs is null)
+            {
+                return "0";
+            }
+
+            var s = new StringBuilder();
+
+            for (var power = 0; power < coeffs.Length; power++)
+            {
+                var coeff = coeffs[power];
+
+                if (coeff != 0)
+                {
+                    if (s.Length > 0)
+                    {
+                        s.Append(" ");
+                    }
+
+                    if (power == 0)
+                    {
+                        s.Append(coeff.ToString().Replace("-", "−"));
+                    }
+                    else
+                    {
+                        if (coeff < 0)
+                        {
+                            s.Append("−");
+
+                            if (s.Length > 1)
+                            {
+                                s.Append(" ");
+                            }
+                        }
+                        else if (s.Length > 0)
+                        {
+                            s.Append("+ ");
+                        }
+
+                        var abs = <#= suffix == "B" ? type + ".Abs(coeff)" : "Math.Abs(coeff)" #>;
+
+                        if (abs != 1)
+                        {
+                            s.Append(abs);
+                        }
+
+                        s.Append("𝑛");
+
+                        if (power > 1)
+                        {
+                            s.Append(new string(power.ToString().Select(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c - '0']).ToArray()));
+                        }
+                    }
+                }
+            }
+
+            return s.ToString();
+        }
+
+        public override bool Equals(object other) => other is <#= name #> val && Equals(val);
+
+        public bool Equals(<#= name #> other) => 
+            Length == 0 ? other.Length == 0 : 
+            other.Length == 0 ? Length == 0 :
+            Enumerable.SequenceEqual(coeffs, other.coeffs);
+
+        public override int GetHashCode() => coeffs?.GetHashCode() ?? 0;
+
+        public static bool operator ==(<#= name #> p, <#= name #> q) => p.Equals(q);
+
+        public static bool operator !=(<#= name #> p, <#= name #> q) => !p.Equals(q);
+
+        public <#= type #> At(<#= type #> x)
+        {
+            <#= type #> sum = 0;
+
+            if (coeffs is null)
+            {
+                return 0;
+            }
+
+            for (var i = coeffs.Length - 1; i >= 0; i--)
+            {
+                sum = sum * x + coeffs[i];
+            }
+
+            return sum;
+        }
+
+        public <#= name #> Squared()
+        {
+            if (Length == 0) return Zero;
+            var r = new <#= type #>[2 * Length - 1];
+            
+            for (var i = 0; i < Length; i++)
+            {
+                for (var j = 0; j < i; j++)
+                {
+                    r[i + j] += 2 * coeffs[i] * coeffs[j];
+                }
+
+                r[i + i] = coeffs[i] * coeffs[i];
+            }
+
+            return new <#= name #>(r, true);
+        }
+
+        private static <#= type #> Pow(<#= type #> k, int n)
+        {
+            if (n < 0)
+                throw new ArgumentOutOfRangeException(nameof(n));
+
+            if (n == 0)
+                return 1;
+
+            if (k == 0)
+                return 0;
+
+            if (n == 1)
+                return k;
+
+            if ((n % 2) == 0)
+            {
+                var s = Pow(k, n / 2);
+                return s * s;
+            }
+
+            return k * Pow(k, n / 2);
+        }
+
+        public <#= name #> Pow(int n)
+        {
+            if (n < 0)
+                throw new ArgumentOutOfRangeException(nameof(n));
+
+            if (n == 0)
+                return new <#= name #>(1);
+
+            if (Length == 0)
+                return Zero;
+
+            if (n == 1)
+                return this;
+
+            if ((n % 2) == 0)
+                return Pow(n / 2).Squared();
+
+            return this * Pow(n - 1);
+        }
+
+        public static <#= name #> operator ^(<#= name #> p, int n) =>
+            p.Pow(n);
+
+        public <#= name #> Derivative()
+        {
+            if (Length == 0) return Zero;
+            var r = new <#= type #>[Length - 1];
+            for (var i = 0; i < r.Length; i++) r[i] = coeffs[i + 1] * (i + 1);
+            return new <#= name #>(r, true);
+        }
+
+        private static <#= type #> GCD(<#= type #> p, <#= type #> q)
+        {
+            while (q != 0)
+            {
+                (p, q) = (q, p % q);
+            }
+
+            return p;
+        }
+
+        public <#= type #> Content()
+        {
+            <#= type #> gcd = 0;
+
+            for (var i = 0; i < Length; i++)
+            {
+                if (coeffs[i] != 0) gcd = GCD(coeffs[i], gcd);
+            }
+
+            return gcd == 0 ? 1 : gcd;
+        }
+
+        public <#= name #> PrimitivePart() => PrimitivePart(out _);
+
+        public <#= name #> PrimitivePart(out <#= type #> content)
+        {
+            content = Content();
+            if (content == 0) return this;
+            var r = Copy();
+            for (var i = 0; i < r.Length; i++) r[i] /= content;
+            return new <#= name #>(r, true);
+        }
+
+        public IEnumerable<<#= name #>> Factors()
+        {
+            var p = PrimitivePart(out var c);
+            var n = p.coeffs.TakeWhile(_ => _ == 0).Count();
+
+            if (c != 1 || n != 0)
+            {
+                var lead = new <#= type #>[n + 1];
+                lead[n] = c;
+                yield return new <#= name #>(lead, true);
+            }
+
+            if (n > 0)
+            {
+                var arr = new <#= type #>[Length - n];
+                Array.Copy(p.coeffs, n, arr, 0, arr.Length);
+                p = new <#= name #>(arr, true);
+            }
+
+            yield return p;
+        }
+
+        public <#= name #> DivRem(<#= name #> divisor, out <#= name #> remainder)
+        {
+            var r = Copy();
+            var offset = Length - divisor.Length;
+
+            if (offset < 0) 
+            {
+                remainder = this;
+                return <#= name #>.Zero;
+            }
+
+            var result = new <#= type #>[offset + 1];
+
+            while (offset >= 0)
+            {
+                var k = r[divisor.Length - 1 + offset] / divisor.coeffs[divisor.Length - 1];
+
+                if (k != 0)
+                {
+                    result[offset] = k;
+
+                    for (var i = 0; i < divisor.Length; i++)
+                    {
+                        r[i + offset] -= divisor[i] * k;
+                    }
+                }
+
+                offset--;
+            }
+
+            remainder = new <#= name #>(r, true);
+            return new <#= name #>(result, true);
+        }
+
+        public static <#= name #> operator /(<#= name #> p, <#= name #> q) =>
+            p.DivRem(q, out _);
+
+        public static <#= name #> operator %(<#= name #> p, <#= name #> q)
+        {
+            _ = p.DivRem(q, out var result);
+            return result;
+        }
+    }
+<#+
+}
+#>

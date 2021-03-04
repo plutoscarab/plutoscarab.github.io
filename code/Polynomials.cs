@@ -10,6 +10,9 @@ public static class Poly
         from poly in WithScore(score)
         select poly;
 
+    public static IEnumerable<int[]> Monic() =>
+        All().Select(p => AddTerm(p, p.Length, 1));
+
     public static IEnumerable<int[]> WithScore(int score) =>
         from degree in Enumerable.Range(0, score)
         from poly in WithTotalAndDegree(score - degree, degree)
