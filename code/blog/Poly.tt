@@ -310,7 +310,7 @@ void Poly(string type, string suffix)
             return new <#= name #>(r, true);
         }
 
-        private static <#= type #> GCD(<#= type #> p, <#= type #> q)
+        internal static <#= type #> GCD(<#= type #> p, <#= type #> q)
         {
             while (q != 0)
             {

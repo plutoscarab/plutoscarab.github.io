@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../code/blog.csproj" />
+    <ProjectReference Include="../../code/blog/blog.csproj" />
   </ItemGroup>
 
 </Project>

@@ -297,7 +297,7 @@ namespace PlutoScarab
             return new PolyI(r, true);
         }
 
-        private static int GCD(int p, int q)
+        internal static int GCD(int p, int q)
         {
             while (q != 0)
             {
@@ -686,7 +686,7 @@ namespace PlutoScarab
             return new PolyL(r, true);
         }
 
-        private static long GCD(long p, long q)
+        internal static long GCD(long p, long q)
         {
             while (q != 0)
             {
@@ -1075,7 +1075,7 @@ namespace PlutoScarab
             return new PolyB(r, true);
         }
 
-        private static BigInteger GCD(BigInteger p, BigInteger q)
+        internal static BigInteger GCD(BigInteger p, BigInteger q)
         {
             while (q != 0)
             {
