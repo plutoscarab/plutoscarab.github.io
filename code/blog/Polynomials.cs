@@ -58,7 +58,15 @@ namespace PlutoScarab
             if (poly is null) throw new ArgumentOutOfRangeException(nameof(poly));
             var s = new StringBuilder();
 
-            for (var power = 0; power < poly.Length; power++)
+            var nonz = poly.Where(coeff => coeff != 0).ToList();
+            var powers = Enumerable.Range(0, poly.Length).ToList();
+
+            if (nonz.Count == 2 && nonz[0] < 0 && nonz[1] > 0)
+            {
+                powers.Reverse();
+            }
+
+            foreach (var power in powers)
             {
                 var coeff = poly[power];
 
@@ -69,37 +77,33 @@ namespace PlutoScarab
                         s.Append(" ");
                     }
 
-                    if (power == 0)
+                    if (coeff < 0)
                     {
-                        s.Append(coeff.ToString().Replace("-", "−"));
+                        s.Append("−");
+
+                        if (s.Length > 1)
+                        {
+                            s.Append(" ");
+                        }
                     }
-                    else
+                    else if (s.Length > 0)
                     {
-                        if (coeff < 0)
-                        {
-                            s.Append("−");
+                        s.Append("+ ");
+                    }
 
-                            if (s.Length > 1)
-                            {
-                                s.Append(" ");
-                            }
-                        }
-                        else if (s.Length > 0)
-                        {
-                            s.Append("+ ");
-                        }
+                    if (Math.Abs(coeff) != 1 || power == 0)
+                    {
+                        s.Append(Math.Abs(coeff));
+                    }
 
-                        if (Math.Abs(coeff) != 1)
-                        {
-                            s.Append(Math.Abs(coeff));
-                        }
-
+                    if (power > 0)
+                    {
                         s.Append(indeterminate);
+                    }
 
-                        if (power > 1)
-                        {
-                            s.Append(Super(power));
-                        }
+                    if (power > 1)
+                    {
+                        s.Append(Super(power));
                     }
                 }
             }

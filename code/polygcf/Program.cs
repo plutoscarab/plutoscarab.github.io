@@ -151,7 +151,7 @@ namespace PlutoScarab
 
                 if (!lookups.ContainsKey(s))
                 {
-                    var num = Poly.ToFactoredString(new[] { a, b }, "{\\sqrt e}");
+                    var num = Poly.ToFactoredString(new[] { a, b }, "\\sqrt e");
                     var den = Poly.ToFactoredString(new[] { c, d }, "e");
                     var expr = "\\frac{" + num + "}{" + den + "}";
                     lookups[s] = expr;
@@ -219,7 +219,7 @@ namespace PlutoScarab
                 file.WriteLine();
                 file.WriteLine("Intended to be found by search engines when a value or terms of a simple");
                 file.WriteLine("continued fraction are known but the generalized continued fraction is unknown.");
-                file.WriteLine("These are the first 10,000 values with polynomials of lowest total score.");
+                file.WriteLine($"These are the first {list.Count:N0} values with polynomials of lowest total score.");
                 file.WriteLine("Polynomal score is equal to its degree plus the sum of absolute values of its coefficients.");
                 file.WriteLine();
                 file.WriteLine("$$");
