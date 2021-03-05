@@ -3,7 +3,7 @@ title: Fusc and Ruler Sequences as Recursive Iterators in C#
 tags: [ math, C# ]
 ---
 
-The [fusc](https://www.cs.utexas.edu/~EWD/transcriptions/EWD05xx/EWD570.html) function is defined for integer $$n > 0$$ as
+The [fusc](https://www.cs.utexas.edu/~EWD/transcriptions/EWD05xx/EWD570.html) function is defined for integer $$n \ge 0$$ as
 
 $$
 \begin{align}
