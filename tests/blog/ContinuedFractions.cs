@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Numerics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -105,6 +106,48 @@ namespace tests
             var fourOverPi = CF.Simplify(odds, squares);
             var pi = CF.Transform(fourOverPi, 4, 0, 0, 1);
             Assert.AreEqual("3.14159265358979", CF.ToString(pi, 14));
+        }
+
+        [TestMethod]
+        public void FromPosPosRational()
+        {
+            var cf = CF.FromRatio(355, 113);
+            var e = new BigInteger[] { 3, 7, 16 };
+            Assert.IsTrue(Enumerable.SequenceEqual(e, cf));
+        }
+
+        [TestMethod]
+        public void FromNegPosRational()
+        {
+            var cf = CF.FromRatio(-355, 113);
+            var e = new BigInteger[] { -4, 1, 6, 16 };
+            Assert.IsTrue(Enumerable.SequenceEqual(e, cf));
+        }
+
+        [TestMethod]
+        public void FromPosNegRational()
+        {
+            var cf = CF.FromRatio(355, -113);
+            var e = new BigInteger[] { -4, 1, 6, 16 };
+            Assert.IsTrue(Enumerable.SequenceEqual(e, cf));
+        }
+
+        [TestMethod]
+        public void FromNegNegRational()
+        {
+            var cf = CF.FromRatio(-355, -113);
+            var e = new BigInteger[] { 3, 7, 16 };
+            Assert.IsTrue(Enumerable.SequenceEqual(e, cf));
+        }
+
+        [TestMethod]
+        public void ToRatio()
+        {
+            var r = (Rational)Math.PI;
+            var cf = CF.FromRatio(r.p, r.q);
+            var (p, q) = CF.ToRatio(cf);
+            Assert.AreEqual(r.p, p);
+            Assert.AreEqual(r.q, q);
         }
     }
 }

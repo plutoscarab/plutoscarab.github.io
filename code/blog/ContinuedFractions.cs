@@ -301,5 +301,45 @@ namespace PlutoScarab
                 x += rand.NextDouble() * Scale;
             }
         }
+
+        public static IEnumerable<BigInteger> FromRatio(BigInteger p, BigInteger q)
+        {
+            if (p.Sign * q.Sign == -1)
+            {
+                foreach (var d in Negate(FromRatio(BigInteger.Abs(p), BigInteger.Abs(q))))
+                {
+                    yield return d;
+                }
+
+                yield break;
+            }
+
+            while (true)
+            {
+                var d = BigInteger.DivRem(p, q, out var r);
+                yield return d;
+
+                if (r.IsZero)
+                {
+                    yield break;
+                }
+
+                (p, q) = (q, r);
+            }
+        }
+
+        public static (BigInteger, BigInteger) ToRatio(IEnumerable<BigInteger> terms)
+        {
+            BigInteger a = 0, b = 1, c = 1, d = 0;
+
+            foreach (var term in terms)
+            {
+                (a, b) = (b, a + b * term);
+                (c, d) = (d, c + d * term);
+            }
+
+            var g = BigInteger.GreatestCommonDivisor(b, d);
+            return (b / g, d / g);
+        }
     }
 }
