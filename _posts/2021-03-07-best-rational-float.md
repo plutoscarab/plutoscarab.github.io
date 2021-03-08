@@ -121,11 +121,11 @@ certainly not all.
 
 The end-points of the half-ULP range are
 
-$$$
+$$
 \frac {12 00959 90063 21321} {36 02879 70189 63968} \lt 
 \frac 1 3 \lt 
 \frac {12 00959 90063 21323} {36 02879 70189 63968}
-$$$
+$$
 
 The continued-fraction representations of these endpoints are
 
@@ -181,9 +181,9 @@ truncating after the 13th term.
 
 This truncated continued fraction is the rational number 
 
-$$$
+$$
 \frac {1657 07065} {527 46197}
-$$$
+$$
 
 This is considerably more concise than the exact rational double-precision value and yet 
 it has the exact same double-precision representation.
