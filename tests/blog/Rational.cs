@@ -67,9 +67,9 @@ namespace tests
             Assert.AreEqual(Math.PI, (double)r.p / (double)r.q);
             var rand = new Random();
 
-            while (true)
+            for (var i = 0; i < 10000; i++)
             {
-                var x = rand.NextDouble();
+                var x = 1 / (rand.NextDouble() - .5);
                 r = Rational.Best(x);
                 Assert.AreEqual(x, (double)r.p / (double)r.q);
             }
