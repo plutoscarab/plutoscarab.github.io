@@ -151,12 +151,12 @@ calculate the ULP endpoint values.
 The $$\pi$$ value and endpoints have continued-fraction representations
 
 ```
-Math.PI + ½ ULP: [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 6, 2, 14, ...]
+Math.PI - ½ ULP: [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 6, 2, 14, ...]
 Math.PI:         [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 3, 3, 2, ...]
-Math.PI - ½ ULP: [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 5, 11, ...]
+Math.PI + ½ ULP: [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 5, 11, ...]
 ```
 
-Notice that the terms go wrong right where they disagree with the +/- half
+Notice that the terms disagree with $$\pi$$ right where they disagree with the +/- half
 ULP terms. The actual terms of $$\pi$$ start with
 
 ```
@@ -175,8 +175,8 @@ but it is actually
 [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2]
 ```
 
-Since the first disagreeing term is in an odd-numbered position, increasing its value actually
-decreases the value of the continued fraction because of the action of the reciprocal after 
+Since the first disagreeing term is in an odd-numbered position, truncating it there actually
+results in a larger-valued continued fraction because of the action of the reciprocal after 
 each term. This truncated continued fraction is the rational number 
 
 $$
