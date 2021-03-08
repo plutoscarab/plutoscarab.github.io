@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Numerics;
 
 namespace PlutoScarab
@@ -42,8 +43,30 @@ namespace PlutoScarab
 
             var p = (BigInteger)mantissa;
             var q = BigInteger.Pow(2, -exponent);
-            var g = BigInteger.GreatestCommonDivisor(p, q);
-            return new Rational(p * sign / g, q / g);
+            return new Rational(p * sign, q);
+        }
+
+        public static Rational Best(double d)
+        {
+            var r = (Rational)d;
+            var lo = new Rational(2 * r.p - 1, 2 * r.q);
+            var hi = new Rational(2 * r.p + 1, 2 * r.q);
+            var clo = CF.FromRatio(lo.p, lo.q).ToList();
+            var chi = CF.FromRatio(hi.p, hi.q).ToList();
+            var matching = clo.Zip(chi).TakeWhile(_ => _.First == _.Second).Count();
+            var even = (matching & 1) == 0;
+            var tlo = clo[matching];
+            var thi = chi[matching];
+            var min = BigInteger.Min(tlo, thi);
+            var cf = (tlo == min ? clo : chi).Take(matching + 1).ToList();
+
+            if (even)
+            {
+                cf[^1]++;
+            }
+
+            var (p, q) = CF.ToRatio(cf);
+            return new Rational(p, q);
         }
     }
 }

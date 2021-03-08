@@ -141,18 +141,19 @@ it's clear that it starts with [0; ...] and the next term must be either 2 or 3.
 For a more interesting case, let's use $$\pi$$. Using `Math.PI` we get the ratios
 
 $$
-\frac {1\ 768\ 559\ 438\ 007\ 109} {562\ 949\ 953\ 421\ 312} \lt 
-\frac {884\ 279\ 719\ 003\ 555} {281\ 474\ 976\ 710\ 656} \lt
-\frac {1\ 768\ 559\ 438\ 007\ 111} {562\ 949\ 953\ 421\ 312}
+\frac {14\ 148\ 475\ 504\ 056\ 879} {4\ 503\ 599\ 627\ 370\ 496} \lt
+\frac {7\ 074\ 237\ 752\ 028\ 440} {2\ 251\ 799\ 813\ 685\ 248} \lt
+\frac {14\ 148\ 475\ 504\ 056\ 881} {4\ 503\ 599\ 627\ 370\ 496}
 $$
 
-The value and endpoints have continued-fraction representations
+Note that the middle fraction isn't in reduced form! We need this non-reduced form to correctly
+calculate the ULP endpoint values.
+The $$\pi$$ value and endpoints have continued-fraction representations
 
 ```
 Math.PI + ½ ULP: [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 6, 2, 14, ...]
 Math.PI:         [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 3, 3, 2, ...]
 Math.PI - ½ ULP: [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 5, 11, ...]
-```
 
 Notice that the terms go wrong right where they disagree with the +/- half
 ULP terms. The actual terms of $$\pi$$ start with
@@ -161,29 +162,24 @@ ULP terms. The actual terms of $$\pi$$ start with
 [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 1, 1, ...]
 ```
 
-It looks like the simplest continued fraction between the two endpoints would be
+The simplest continued fraction between the two endpoints looks like it would be 
 
 ```
 [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 3]
 ```
 
-but in fact it is 
+but it is actually
 
 ```
 [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2]
 ```
 
-When comparing simple continued fractions, the terms in odd-number positions are in 
-"reverse order" because of the reciprocal operation that occurs between terms. This 
-is the 13th term (counting the whole-number term as term 0) so we want to increase 
-the next, 14th term, which is 5, to infinity in the limit. That's the same as just 
-truncating after the 13th term. 
-
-This truncated continued fraction is the rational number 
+Since the first disagreeing term is in an odd-numbered position, increasing its value actually
+decreases the value of the continued fraction because of the action of the reciprocal after 
+each term. This truncated continued fraction is the rational number 
 
 $$
 \frac {165\ 707\ 065} {52\ 746\ 197}
 $$
 
-This is considerably more concise than the exact rational double-precision value and yet 
-it has the exact same double-precision representation.
+This is considerably more concise than the exact rational double-precision value and yet it has the exact same double-precision representation.
