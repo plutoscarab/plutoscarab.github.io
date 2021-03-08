@@ -3,7 +3,7 @@ title: Fusc and Ruler Sequences as Recursive Iterators in C#
 tags: [ math, C# ]
 ---
 
-The [fusc](https://www.cs.utexas.edu/~EWD/transcriptions/EWD05xx/EWD570.html) function is defined for integer $$n > 0$$ as
+The [fusc](https://www.cs.utexas.edu/~EWD/transcriptions/EWD05xx/EWD570.html) function is defined for integer $$n \ge 0$$ as
 
 $$
 \begin{align}
@@ -89,7 +89,7 @@ IEnumerable<(int, int)> AllRationals()
 }
 ```
 
-This is the depth-first traversal of the [Calkin-Wilf tree](https://en.wikipedia.org/wiki/Calkin%E2%80%93Wilf_tree)
+This is the breadth-first traversal of the [Calkin-Wilf tree](https://en.wikipedia.org/wiki/Calkin%E2%80%93Wilf_tree)
 which starts like this:
 
 1/1, 1/2, 2/1, 1/3, 3/2, 2/3, 3/1, 1/4, 4/3, 3/5, 5/2, 2/5, 5/3, 3/4, 4/1, 1/5, 5/4, 4/7, 7/3, 3/8 
