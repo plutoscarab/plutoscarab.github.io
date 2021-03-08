@@ -98,7 +98,7 @@ namespace tests
         {
             void Row(string name, double d)
             {
-                Console.Write($"|$${name}$$|");
+                Console.Write($"|$${name}$$ ≅ {d}|");
                 var r = Rational.Best(d);
                 Console.Write("$$\\frac {" + Num(r.p) + "} {" + Num(r.q) + "}$$|");
                 r = Rational.Best((float)d);
@@ -109,7 +109,7 @@ namespace tests
             Row("e", Math.E);
             Row("\\sqrt 2", Math.Sqrt(2));
             Row("\\phi", (Math.Sqrt(5) + 1) / 2);
-            Row("log 2", Math.Log(2));
+            Row("ln(2)", Math.Log(2));
             Row("\\gamma", 0.57721566490153286);
             Row("G", 0.915965594177219015054603514932384110774);
             Row("\\zeta(3)", 1.202056903159594);
