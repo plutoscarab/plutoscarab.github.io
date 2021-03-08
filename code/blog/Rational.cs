@@ -48,7 +48,7 @@ namespace PlutoScarab
 
         public static explicit operator Rational(float f)
         {
-            const int exponentBits = 7;
+            const int exponentBits = 8;
             const int mantissaBits = 31 - exponentBits;
             const int exponentMask = (1 << exponentBits) - 1;
             const int exponentBias = exponentMask / 2 + mantissaBits;

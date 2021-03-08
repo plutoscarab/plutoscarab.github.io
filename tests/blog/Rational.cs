@@ -84,11 +84,17 @@ namespace tests
             Assert.AreEqual((float)Math.PI, (float)r.p / (float)r.q);
             var rand = new Random();
 
-            for (var i = 0; i < 10000; i++)
+            for (var i = 0; i < 1000; i++)
             {
                 var x = 1 / ((float)rand.NextDouble() - .5f);
                 r = Rational.Best(x);
                 Assert.AreEqual(x, (float)r.p / (float)r.q);
+
+                while (r.q > 1)
+                {
+                    r = new Rational((BigInteger)((double)(r.q - 1) * x + .5), r.q - 1);
+                    Assert.AreNotEqual(x, (float)r.p / (float)r.q);
+                }
             }
         }
 
