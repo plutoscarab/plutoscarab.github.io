@@ -53,9 +53,6 @@ namespace tests
             Trace.WriteLine(hi);
             Trace.WriteLine(string.Join(", ", CF.FromRatio(lo.p, lo.q)));
             Trace.WriteLine(string.Join(", ", CF.FromRatio(hi.p, hi.q)));
-
-            var x = 165707065.0 / 52746197;
-            Assert.AreEqual(Math.PI, x);
         }
 
         [TestMethod]

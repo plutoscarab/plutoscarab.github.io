@@ -143,7 +143,7 @@ namespace tests
         [TestMethod]
         public void ToRatio()
         {
-            var r = (Rational)Math.PI;
+            var r = ((Rational)Math.PI).Reduce();
             var cf = CF.FromRatio(r.p, r.q);
             var (p, q) = CF.ToRatio(cf);
             Assert.AreEqual(r.p, p);

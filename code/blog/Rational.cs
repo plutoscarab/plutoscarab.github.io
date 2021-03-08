@@ -111,5 +111,18 @@ namespace PlutoScarab
             var (p, q) = CF.ToRatio(cf);
             return new Rational(p, q);
         }
+
+        public static void Reduce(ref BigInteger p, ref BigInteger q)
+        {
+            var g = BigInteger.GreatestCommonDivisor(p, q);
+            p /= g;
+            q /= g;
+        }
+
+        public Rational Reduce()
+        {
+            var g = BigInteger.GreatestCommonDivisor(p, q);
+            return new Rational(p / g, q / g);
+        }
     }
 }
