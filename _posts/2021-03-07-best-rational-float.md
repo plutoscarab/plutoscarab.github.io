@@ -154,6 +154,7 @@ The $$\pi$$ value and endpoints have continued-fraction representations
 Math.PI + ½ ULP: [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 6, 2, 14, ...]
 Math.PI:         [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 3, 3, 2, ...]
 Math.PI - ½ ULP: [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 5, 11, ...]
+```
 
 Notice that the terms go wrong right where they disagree with the +/- half
 ULP terms. The actual terms of $$\pi$$ start with
