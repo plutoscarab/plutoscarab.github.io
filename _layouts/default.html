@@ -19,6 +19,30 @@
     <script type="text/javascript" id="MathJax-script" defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
     </script>
 
+    <style>
+      .PageNavigation {
+        font-size: 14px;
+        display: block;
+        width: auto;
+        overflow: hidden;
+      }
+
+      .PageNavigation a {
+        display: block;
+        width: 50%;
+        float: left;
+        margin: 1em 0;
+      }
+
+      .PageNavigation .home {
+        text-align: center;
+      }
+
+      .PageNavigation .next {
+        text-align: right;
+      }
+    </style>
+
   </head>
   <body>
       <div id="header">
@@ -51,7 +75,11 @@
         
         {{ content }}
 
-        <a href="/">Home</a>
+        <div class="PageNavigation">
+          {% if page.previous.url %}<a class="prev" href="{{page.previous.url}}">&laquo; {{page.previous.title}}</a>{% endif %}
+          <a class="home" href="/">Home</a>
+          {% if page.next.url %}<a class="next" href="{{page.next.url}}">{{page.next.title}} &raquo;</a>{% endif %}
+        </div>
 
       </section>
 

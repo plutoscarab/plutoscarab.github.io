@@ -80,6 +80,15 @@ namespace tests
         }
 
         [TestMethod]
+        public void SimplifyΠ()
+        {
+            var odds = CF.Nats().Select(n => 2 * n + 1);
+            var squares = CF.Nats().Select(n => 1 + n * (2 + n));
+            var pi = CF.Transform(CF.Simplify(odds, squares), 4, 0, 0, 1).Take(10).ToList();
+            Assert.IsTrue(Enumerable.SequenceEqual(new BigInteger[] { 3, 7, 15, 1, 292, 1, 1, 1, 2, 1, }, pi));
+        }
+
+        [TestMethod]
         public void AddInt()
         {
             var x = CF.Random("AddInt".GetHashCode());
