@@ -163,24 +163,21 @@ ULP terms. The actual terms of $$\pi$$ start with
 [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 1, 1, ...]
 ```
 
-The simplest continued fraction between the two endpoints looks like it would be 
+The simplest continued fraction between the two endpoints is
 
 ```
 [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 3]
 ```
 
-but it is actually
+although this isn't as obvious as it looks. In some cases you would just truncate and
+end with the "2" term. It depends on whether the first different term is in an odd
+or even position (because of the effect of reciprocal between each term) and whether
+that value is the + or - half ULP endpoint.
 
-```
-[3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2]
-```
-
-Since the first disagreeing term is in an odd-numbered position, truncating it there actually
-results in a larger-valued continued fraction because of the action of the reciprocal after 
-each term. This truncated continued fraction is the rational number 
+The value of the truncated continued fraction is 
 
 $$
-\frac {165\ 707\ 065} {52\ 746\ 197}
+\frac {245\ 850\ 922} {78\ 256\ 779}
 $$
 
 This is considerably more concise than the exact rational double-precision value and yet it has the exact same double-precision representation.

@@ -60,7 +60,7 @@ namespace PlutoScarab
             var min = BigInteger.Min(tlo, thi);
             var cf = (tlo == min ? clo : chi).Take(matching + 1).ToList();
 
-            if (even)
+            if ((even && tlo == min) || (!even && thi == min))
             {
                 cf[^1]++;
             }

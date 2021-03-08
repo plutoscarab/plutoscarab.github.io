@@ -63,7 +63,16 @@ namespace tests
         {
             var r = Rational.Best(Math.PI);
             Trace.WriteLine($"{r.p} / {r.q}");
+            Trace.WriteLine($"\\frac {{{Num(r.p)}}} {{{Num(r.q)}}}");
             Assert.AreEqual(Math.PI, (double)r.p / (double)r.q);
+            var rand = new Random();
+
+            while (true)
+            {
+                var x = rand.NextDouble();
+                r = Rational.Best(x);
+                Assert.AreEqual(x, (double)r.p / (double)r.q);
+            }
         }
     }
 }
