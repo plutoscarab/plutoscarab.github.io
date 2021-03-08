@@ -8,7 +8,7 @@ is always a power of two. For example, the double-precision representation of 1/
 actually
 
 $$
-\frac {6 00479 95031 60661} {2^{54}} = \frac {6 00479 95031 60661} {18 01439 85094 81984}
+\frac {6\ 004\ 799\ 503\ 160\ 661} {2^{54}} = \frac {6\ 004\ 799\ 503\ 160\ 661} {1\ 801\ 439\ 850\ 948\ 1984}
 $$
 
 but in a more concise form where the exponent of the denominator is stored instead of
@@ -122,9 +122,9 @@ certainly not all.
 The end-points of the half-ULP range are
 
 $$
-\frac {12 00959 90063 21321} {36 02879 70189 63968} \lt 
+\frac {12\ 009\ 599\ 006\ 321\ 321} {36\ 028\ 797\ 018\ 963\ 968} \lt 
 \frac 1 3 \lt 
-\frac {12 00959 90063 21323} {36 02879 70189 63968}
+\frac {12\ 009\ 599\ 006\ 321\ 323} {36\ 028\ 797\ 018\ 963\ 968}
 $$
 
 The continued-fraction representations of these endpoints are
@@ -141,9 +141,9 @@ it's clear that it starts with [0; ...] and the next term must be either 2 or 3.
 For a more interesting case, let's use $$\pi$$. Using `Math.PI` we get the ratios
 
 $$
-\frac {1 76855 94380 07109} {56294 99534 21312} \lt 
-\frac {88427 97190 03555} {28147 49767 10656} \lt
-\frac {1 76855 94380 07111} {56294 99534 21312}
+\frac {1\ 768\ 559\ 438\ 007\ 109} {562\ 949\ 953\ 421\ 312} \lt 
+\frac {884\ 279\ 719\ 003\ 555} {281\ 474\ 976\ 710\ 656} \lt
+\frac {1\ 768\ 559\ 438\ 007\ 111} {562\ 949\ 953\ 421\ 312}
 $$
 
 The value and endpoints have continued-fraction representations
@@ -182,7 +182,7 @@ truncating after the 13th term.
 This truncated continued fraction is the rational number 
 
 $$
-\frac {1657 07065} {527 46197}
+\frac {165\ 707\ 065} {52\ 746\ 197}
 $$
 
 This is considerably more concise than the exact rational double-precision value and yet 
