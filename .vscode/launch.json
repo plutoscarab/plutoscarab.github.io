@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/code/osm/bin/Debug/net5.0/osm.dll",
+            "program": "${workspaceFolder}/code/polygcf/bin/Debug/net5.0/polygcf.dll",
             "args": [],
             "cwd": "${workspaceFolder}/code/polygcf",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
