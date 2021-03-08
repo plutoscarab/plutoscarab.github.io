@@ -13,12 +13,16 @@ namespace tests
         private static string Num(BigInteger n)
         {
             var s = new StringBuilder(n.ToString());
-            var i = s.Length - 3;
 
-            while (i > 0)
+            if (s.Length > 5)
             {
-                s.Insert(i, "\\ ");
-                i -= 3;
+                var i = s.Length - 3;
+
+                while (i > 0)
+                {
+                    s.Insert(i, "\\ ");
+                    i -= 3;
+                }
             }
 
             return s.ToString();
@@ -101,7 +105,7 @@ namespace tests
         {
             void Row(string name, double d)
             {
-                Console.Write($"|$${name}$$ ≅ {d}|");
+                Console.Write($"|$${name}$$|{d}|");
                 var r = Rational.Best(d);
                 Console.Write("$$\\frac {" + Num(r.p) + "} {" + Num(r.q) + "}$$|");
                 r = Rational.Best((float)d);
