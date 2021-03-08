@@ -181,3 +181,48 @@ $$
 $$
 
 This is considerably more concise than the exact rational double-precision value and yet it has the exact same double-precision representation.
+
+```csharp
+public static Rational Best(double d) => Best((Rational)d);
+
+public static Rational Best(float f) => Best((Rational)f);
+
+private static Rational Best(Rational r) => Best(
+    new Rational(2 * r.p - 1, 2 * r.q), 
+    new Rational(2 * r.p + 1, 2 * r.q));
+
+public static Rational Best(Rational lo, Rational hi)
+{
+    var clo = FromRatio(lo.p, lo.q).ToList();
+    var chi = FromRatio(hi.p, hi.q).ToList();
+    var matching = clo.Zip(chi).TakeWhile(_ => _.First == _.Second).Count();
+    var even = (matching & 1) == 0;
+    var tlo = clo[matching];
+    var thi = chi[matching];
+    var min = BigInteger.Min(tlo, thi);
+    var cf = (tlo == min ? clo : chi).Take(matching + 1).ToList();
+
+    if ((even && tlo == min) || (!even && thi == min))
+    {
+        cf[^1]++;
+    }
+
+    var (p, q) = ToRatio(cf);
+    return new Rational(p, q);
+}
+```
+
+A table of some common values:
+
+|Value|Double-precision|Single-precision|
+|-----|:--------------:|:--------------:|
+|$$\pi$$|$$\frac {245\ 850\ 922} {78\ 256\ 779}$$|$$\frac {76\ 674} {29\ 825}$$|
+|$$e$$|$$\frac {268\ 876\ 667} {98\ 914\ 198}$$|$$\frac {4\ 723} {2\ 002}$$|
+|$$\sqrt 2$$|$$\frac {131\ 836\ 323} {93\ 222\ 358}$$|$$\frac {5\ 741} {3\ 363}$$|
+|$$\phi$$|$$\frac {165\ 580\ 141} {102\ 334\ 155}$$|$$\frac {9\ 349} {5\ 168}$$|
+|$$log 2$$|$$\frac {49\ 180\ 508} {70\ 952\ 475}$$|$$\frac {4\ 701} {3\ 940}$$|
+|$$\gamma$$|$$\frac {240\ 627\ 391} {416\ 876\ 058}$$|$$\frac {2\ 832} {2\ 629}$$|
+|$$G$$|$$\frac {105\ 640\ 241} {115\ 332\ 106}$$|$$\frac {7\ 574} {5\ 349}$$|
+|$$\zeta(3)$$|$$\frac {89\ 952\ 803} {74\ 832\ 400}$$|$$\frac {5\ 293} {3\ 306}$$|
+|$$\sqrt {2\pi}$$|$$\frac {127\ 095\ 877} {50\ 703\ 919}$$|$$\frac {7\ 819} {3\ 470}$$|
+

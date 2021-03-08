@@ -23,7 +23,7 @@ namespace tests
 
             return s.ToString();
         }
-        
+
         [TestMethod]
         public void FromDouble()
         {
@@ -59,7 +59,7 @@ namespace tests
         }
 
         [TestMethod]
-        public void Best()
+        public void BestDouble()
         {
             var r = Rational.Best(Math.PI);
             Trace.WriteLine($"{r.p} / {r.q}");
@@ -73,6 +73,47 @@ namespace tests
                 r = Rational.Best(x);
                 Assert.AreEqual(x, (double)r.p / (double)r.q);
             }
+        }
+
+        [TestMethod]
+        public void BestFloat()
+        {
+            var r = Rational.Best((float)Math.PI);
+            Trace.WriteLine($"{r.p} / {r.q}");
+            Trace.WriteLine($"\\frac {{{Num(r.p)}}} {{{Num(r.q)}}}");
+            Assert.AreEqual((float)Math.PI, (float)r.p / (float)r.q);
+            var rand = new Random();
+
+            for (var i = 0; i < 10000; i++)
+            {
+                var x = 1 / ((float)rand.NextDouble() - .5f);
+                r = Rational.Best(x);
+                Assert.AreEqual(x, (float)r.p / (float)r.q);
+            }
+        }
+
+
+        [TestMethod]
+        public void TableOfBest()
+        {
+            void Row(string name, double d)
+            {
+                Console.Write($"|$${name}$$|");
+                var r = Rational.Best(d);
+                Console.Write("$$\\frac {" + Num(r.p) + "} {" + Num(r.q) + "}$$|");
+                r = Rational.Best((float)d);
+                Console.WriteLine("$$\\frac {" + Num(r.p) + "} {" + Num(r.q) + "}$$|");
+            }
+
+            Row("\\pi", Math.PI);
+            Row("e", Math.E);
+            Row("\\sqrt 2", Math.Sqrt(2));
+            Row("\\phi", (Math.Sqrt(5) + 1) / 2);
+            Row("log 2", Math.Log(2));
+            Row("\\gamma", 0.57721566490153286);
+            Row("G", 0.915965594177219015054603514932384110774);
+            Row("\\zeta(3)", 1.202056903159594);
+            Row("\\sqrt {2\\pi}", Math.Sqrt(2 * Math.PI));
         }
     }
 }

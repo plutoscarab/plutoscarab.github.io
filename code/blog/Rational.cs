@@ -46,11 +46,54 @@ namespace PlutoScarab
             return new Rational(p * sign, q);
         }
 
-        public static Rational Best(double d)
+        public static explicit operator Rational(float f)
         {
-            var r = (Rational)d;
-            var lo = new Rational(2 * r.p - 1, 2 * r.q);
-            var hi = new Rational(2 * r.p + 1, 2 * r.q);
+            const int exponentBits = 7;
+            const int mantissaBits = 31 - exponentBits;
+            const int exponentMask = (1 << exponentBits) - 1;
+            const int exponentBias = exponentMask / 2 + mantissaBits;
+            const int mantissaMsb = 1 << mantissaBits;
+            const int mantissaMask = mantissaMsb - 1;
+
+            var bits = BitConverter.SingleToInt32Bits(f);
+            var sign = bits < 0 ? -1 : +1;
+            var exponent = (int)(bits >> mantissaBits) & exponentMask;
+            var mantissa = bits & mantissaMask;
+
+            if (exponent == 0)
+            {
+                exponent = 1;
+
+                if (mantissa == 0)
+                {
+                    return new Rational(BigInteger.Zero, BigInteger.One);
+                }
+            }
+            else
+            {
+                mantissa |= mantissaMsb;
+            }
+
+            exponent -= exponentBias;
+
+            if (exponent >= 0)
+            {
+                return new Rational(BigInteger.Pow(2, exponent) * mantissa * sign, BigInteger.One);
+            }
+
+            var p = (BigInteger)mantissa;
+            var q = BigInteger.Pow(2, -exponent);
+            return new Rational(p * sign, q);
+        }
+
+        public static Rational Best(double d) => Best((Rational)d);
+
+        public static Rational Best(float f) => Best((Rational)f);
+
+        private static Rational Best(Rational r) => Best(new Rational(2 * r.p - 1, 2 * r.q), new Rational(2 * r.p + 1, 2 * r.q));
+
+        public static Rational Best(Rational lo, Rational hi)
+        {
             var clo = CF.FromRatio(lo.p, lo.q).ToList();
             var chi = CF.FromRatio(hi.p, hi.q).ToList();
             var matching = clo.Zip(chi).TakeWhile(_ => _.First == _.Second).Count();
