@@ -98,16 +98,9 @@ namespace PlutoScarab
             var chi = CF.FromRatio(hi.p, hi.q).ToList();
             var matching = clo.Zip(chi).TakeWhile(_ => _.First == _.Second).Count();
             var even = (matching & 1) == 0;
-            var tlo = clo[matching];
-            var thi = chi[matching];
-            var min = BigInteger.Min(tlo, thi);
-            var cf = (tlo == min ? clo : chi).Take(matching + 1).ToList();
-
-            if ((even && tlo == min) || (!even && thi == min))
-            {
-                cf[^1]++;
-            }
-
+            var cf = clo.Take(matching).ToList();
+            var min = BigInteger.Min(clo[matching], chi[matching]);
+            cf.Add(min + 1);
             var (p, q) = CF.ToRatio(cf);
             return new Rational(p, q);
         }

@@ -169,11 +169,7 @@ The simplest continued fraction between the two endpoints is
 [3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 3]
 ```
 
-although this isn't as obvious as it looks. In some cases you would just truncate and
-end with the "2" term. It depends on whether the first different term is in an odd
-or even position (because of the effect of reciprocal between each term) and whether
-that value is the + or - half ULP endpoint.
-
+where we take one more than the minimum of the first disagreeing terms.
 The value of the truncated continued fraction is 
 
 $$
@@ -197,16 +193,9 @@ public static Rational Best(Rational lo, Rational hi)
     var chi = FromRatio(hi.p, hi.q).ToList();
     var matching = clo.Zip(chi).TakeWhile(_ => _.First == _.Second).Count();
     var even = (matching & 1) == 0;
-    var tlo = clo[matching];
-    var thi = chi[matching];
-    var min = BigInteger.Min(tlo, thi);
-    var cf = (tlo == min ? clo : chi).Take(matching + 1).ToList();
-
-    if ((even && tlo == min) || (!even && thi == min))
-    {
-        cf[^1]++;
-    }
-
+    var cf = clo.Take(matching).ToList();
+    var min = BigInteger.Min(clo[matching], chi[matching]);
+    cf.Add(min + 1);
     var (p, q) = ToRatio(cf);
     return new Rational(p, q);
 }
@@ -218,11 +207,11 @@ A table of some common values:
 |-----|-----------|:--------------:|:--------------:|
 |$$\pi$$|3.141592653589793|$$\frac {245\ 850\ 922} {78\ 256\ 779}$$|$$\frac {93343} {29712}$$|
 |$$e$$|2.718281828459045|$$\frac {268\ 876\ 667} {98\ 914\ 198}$$|$$\frac {2721} {1001}$$|
-|$$\sqrt 2$$|1.4142135623730951|$$\frac {131\ 836\ 323} {93\ 222\ 358}$$|$$\frac {4756} {3363}$$|
+|$$\sqrt {2\pi}$$|2.5066282746310002|$$\frac {127\ 095\ 877} {50\ 703\ 919}$$|$$\frac {4349} {1735}$$|
 |$$\phi$$|1.618033988749895|$$\frac {165\ 580\ 141} {102\ 334\ 155}$$|$$\frac {4181} {2584}$$|
+|$$\sqrt 2$$|1.4142135623730951|$$\frac {131\ 836\ 323} {93\ 222\ 358}$$|$$\frac {4756} {3363}$$|
+|$$\zeta(3)$$|1.202056903159594|$$\frac {89\ 952\ 803} {74\ 832\ 400}$$|$$\frac {1987} {1653}$$|
+|$$G$$|0.915965594177219|$$\frac {105\ 640\ 241} {115\ 332\ 106}$$|$$\frac {9690} {10579}$$|
 |$$ln(2)$$|0.6931471805599453|$$\frac {49\ 180\ 508} {70\ 952\ 475}$$|$$\frac {2731} {3940}$$|
 |$$\gamma$$|0.5772156649015329|$$\frac {240\ 627\ 391} {416\ 876\ 058}$$|$$\frac {3035} {5258}$$|
-|$$G$$|0.915965594177219|$$\frac {105\ 640\ 241} {115\ 332\ 106}$$|$$\frac {9690} {10579}$$|
-|$$\zeta(3)$$|1.202056903159594|$$\frac {89\ 952\ 803} {74\ 832\ 400}$$|$$\frac {1987} {1653}$$|
-|$$\sqrt {2\pi}$$|2.5066282746310002|$$\frac {127\ 095\ 877} {50\ 703\ 919}$$|$$\frac {4349} {1735}$$|
 

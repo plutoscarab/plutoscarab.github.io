@@ -105,11 +105,11 @@ namespace tests
         {
             void Row(string name, double d)
             {
-                Console.Write($"|$${name}$$|{d}|");
+                Trace.Write($"|$${name}$$|{d}|");
                 var r = Rational.Best(d);
-                Console.Write("$$\\frac {" + Num(r.p) + "} {" + Num(r.q) + "}$$|");
+                Trace.Write("$$\\frac {" + Num(r.p) + "} {" + Num(r.q) + "}$$|");
                 r = Rational.Best((float)d);
-                Console.WriteLine("$$\\frac {" + Num(r.p) + "} {" + Num(r.q) + "}$$|");
+                Trace.WriteLine("$$\\frac {" + Num(r.p) + "} {" + Num(r.q) + "}$$|");
             }
 
             Row("\\pi", Math.PI);
