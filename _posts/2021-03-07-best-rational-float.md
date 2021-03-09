@@ -62,7 +62,8 @@ public record Rational(BigInteger p, BigInteger q)
 }
 ```
 
-There are an infinite number of possible rational numbers that result in the same
+There are an infinite number of possible rational numbers that have a double-precision
+representation that is the same as the
 double-precision value for 1/3. The rational 1/3 could be considered the "best" of these
 in the sense that it has the smallest numerator or denominator of all of them.
 
@@ -192,7 +193,6 @@ public static Rational Best(Rational lo, Rational hi)
     var clo = FromRatio(lo.p, lo.q).ToList();
     var chi = FromRatio(hi.p, hi.q).ToList();
     var matching = clo.Zip(chi).TakeWhile(_ => _.First == _.Second).Count();
-    var even = (matching & 1) == 0;
     var cf = clo.Take(matching).ToList();
     var min = BigInteger.Min(clo[matching], chi[matching]);
     cf.Add(min + 1);

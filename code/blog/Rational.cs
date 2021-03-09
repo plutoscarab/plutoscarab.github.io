@@ -97,7 +97,6 @@ namespace PlutoScarab
             var clo = CF.FromRatio(lo.p, lo.q).ToList();
             var chi = CF.FromRatio(hi.p, hi.q).ToList();
             var matching = clo.Zip(chi).TakeWhile(_ => _.First == _.Second).Count();
-            var even = (matching & 1) == 0;
             var cf = clo.Take(matching).ToList();
             var min = BigInteger.Min(clo[matching], chi[matching]);
             cf.Add(min + 1);
