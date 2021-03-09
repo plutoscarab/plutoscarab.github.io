@@ -341,5 +341,61 @@ namespace PlutoScarab
             var g = BigInteger.GreatestCommonDivisor(b, d);
             return (b / g, d / g);
         }
+
+        public static IList<BigInteger> Normalize(IList<BigInteger> terms)
+        {
+            var result = new List<BigInteger>();
+            result.AddRange(terms);
+            var i = 1;
+
+            while (i < result.Count)
+            {
+                switch (result[i].Sign)
+                {
+                    case +1:
+                        i++;
+                        break;
+
+                    case 0:
+                        if (i == result.Count - 1)
+                        {
+                            result.RemoveAt(i);
+                            result.RemoveAt(i - 1);
+                            i = result.Count;
+                            break;
+                        }
+
+                        result[i - 1] += result[i + 1];
+                        result.RemoveAt(i);
+                        result.RemoveAt(i);
+                        if (i > 1) i--;
+                        break;
+
+                    case -1:
+                        result[i - 1]--;
+                        result[i] = -result[i] - 1;
+                        result.Insert(i, BigInteger.One);
+
+                        for (var j = i + 2; j < result.Count; j++)
+                        {
+                            result[j] = -result[j];
+                        }
+
+                        if (i > 1) i--;
+                        break;
+
+                    default:
+                        throw new InvalidOperationException($"{nameof(BigInteger)}.Sign returned something other that -1, 0, or 1.");
+                }
+            }
+
+            if (result.Count > 1 && result[^1] == BigInteger.One)
+            {
+                result.RemoveAt(result.Count - 1);
+                result[^1]++;
+            }
+
+            return result;
+        }
     }
 }

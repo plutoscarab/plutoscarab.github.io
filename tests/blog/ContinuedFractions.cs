@@ -158,5 +158,39 @@ namespace tests
             Assert.AreEqual(r.p, p);
             Assert.AreEqual(r.q, q);
         }
+
+        [TestMethod]
+        public void Normalize()
+        {
+            var rand = new Random("Normalize".GetHashCode());
+
+            for (var i = 0; i < 1000; i++)
+            {
+                var cf = new BigInteger[10];
+
+                for (var j = 0; j < cf.Length; j++)
+                {
+                    cf[j] = rand.Next(5) - 2;
+                }
+
+                var value = CF.ToRatio(cf);
+                var ncf = CF.Normalize(cf);
+                var nvalue = CF.ToRatio(ncf);
+                Assert.AreEqual(value.Item1 * nvalue.Item2, nvalue.Item1 * value.Item2);
+
+                for (var j = 1; j < ncf.Count; j++)
+                {
+                    if (ncf[j].Sign < 1)
+                    {
+                        Assert.Fail($"Term [{j}] of normalized CF isn't positive. {string.Join(", ", cf)} -> {string.Join(", ", ncf)}");
+                    }
+                }
+
+                if (ncf.Count > 1)
+                {
+                    Assert.AreNotEqual(BigInteger.One, ncf[^1]);
+                }
+            }
+        }
     }
 }

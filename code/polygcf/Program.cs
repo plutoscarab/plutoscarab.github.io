@@ -175,6 +175,18 @@ namespace PlutoScarab
                 var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
                 var qs = CF.Nats().Select(n => { qterms++; return Poly.Eval(q, n); });
                 var cf = CF.Simplify(ps, qs);
+                List<BigInteger> capture = null;
+
+                IEnumerable<BigInteger> Captured(IEnumerable<BigInteger> terms)
+                {
+                    capture = new List<BigInteger>();
+
+                    foreach (var term in terms)
+                    {
+                        capture.Add(term);
+                        yield return term;
+                    }
+                }
 
                 if (!cf.Any())
                     continue;
@@ -185,13 +197,13 @@ namespace PlutoScarab
                     continue;
 
                 pterms = qterms = 0;
-                var s = CF.Digits(cf, 25);
-                var termsUsed = Math.Max(pterms, qterms);
+                var s = CF.Digits(Captured(cf), 25);
 
                 if (s.EndsWith(CF.InvalidDigit))
                     continue;
 
-                // Console.WriteLine(s);
+                var termsUsed = Math.Max(pterms, qterms);
+                cf = CF.Normalize(capture);
                 var scf = "[" + first + "; " + string.Join(", ", cf.Skip(1).Take(5)) + ", ...]";
 
                 if (lookups.TryGetValue(s, out var expr))
