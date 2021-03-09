@@ -20,31 +20,6 @@ namespace PlutoScarab
             return Math.Abs(m) * sign;
         }
 
-        static IEnumerable<int> SternDiatomic()
-        {
-            yield return 1;
-            yield return 1;
-            var n = 1;
-
-            foreach (var m in SternDiatomic().Skip(1))
-            {
-                yield return n + m;
-                yield return m;
-                n = m;
-            }
-        }
-
-        static IEnumerable<(int, int)> Rationals()
-        {
-            var n = 1;
-
-            foreach (var m in SternDiatomic().Skip(1))
-            {
-                yield return (n, m);
-                n = m;
-            }
-        }
-
         static void Main(string[] args)
         {
             const int maxScore = 11;
@@ -100,15 +75,15 @@ namespace PlutoScarab
             var sqrtE = CF.Nats().SelectMany(n => new[] { 1, 1 + 4 * n, 1 });
 
             var es =
-                from a in Enumerable.Range(-9, 19)
-                from b in Enumerable.Range(-9, 19)
                 from c in Enumerable.Range(-9, 19)
                 from d in Enumerable.Range(-9, 19)
-                let g = GCD(GCD(a, b), GCD(c, d))
                 let q = c + d * Math.E
                 where q > 0
+                from a in Enumerable.Range(-9, 19)
+                from b in Enumerable.Range(-9, 19)
+                let g = GCD(GCD(a, b), GCD(c, d))
                 let v = (a + b * Math.E) / q
-                where g == 1 && b * d != 0 && v > 0 && v != 1
+                where g == 1 && v > 0 && v != 1
                 select (a / g, b / g, c / g, d / g);
 
             foreach (var (a, b, c, d) in es)
@@ -121,7 +96,7 @@ namespace PlutoScarab
 
                 var num = Poly.ToFactoredString(new[] { a, b }, "e");
                 var den = Poly.ToFactoredString(new[] { c, d }, "e");
-                var expr = "\\frac{" + num + "}{" + den + "}";
+                var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
 
                 if (!lookups.ContainsKey(s))
                 {
@@ -137,8 +112,8 @@ namespace PlutoScarab
                 from a in Enumerable.Range(-9, 19)
                 from b in Enumerable.Range(-9, 19)
                 let g = GCD(GCD(a, b), GCD(c, d))
-                let v = (a + b * Math.Sqrt(Math.E)) / (c + d * Math.E)
-                where g == 1 && b * d != 0 && v > 0 && v != 1
+                let v = (a + b * Math.Sqrt(Math.E)) / q
+                where g == 1 && b != 0 && v > 0 && v != 1
                 select (a / g, b / g, c / g, d / g);
 
             foreach (var (a, b, c, d) in es)
@@ -153,10 +128,51 @@ namespace PlutoScarab
                 {
                     var num = Poly.ToFactoredString(new[] { a, b }, "\\sqrt e");
                     var den = Poly.ToFactoredString(new[] { c, d }, "e");
-                    var expr = "\\frac{" + num + "}{" + den + "}";
+                    var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
                     lookups[s] = expr;
                 }
             }
+
+            // pi
+            var odds = CF.Nats().Select(n => 2 * n + 1);
+            var squares = CF.Nats().Select(n => (n + 1) * (n + 1));
+            var pi = CF.Transform(CF.Simplify(odds, squares), 4, 0, 0, 1);
+
+            var pis =
+                from c in Enumerable.Range(-9, 19)
+                from d in Enumerable.Range(-9, 19)
+                let q = c + d * Math.PI
+                where q > 0
+                from a in Enumerable.Range(-9, 19)
+                from b in Enumerable.Range(-9, 19)
+                let g = GCD(GCD(a, b), GCD(c, d))
+                let v = (a + b * Math.PI) / q
+                where g == 1 && v > 0 && v != 1
+                select (a / g, b / g, c / g, d / g);
+
+            foreach (var (a, b, c, d) in pis)
+            {
+                var cf = CF.Transform(pi, a, b, c, d);
+                var s = CF.Digits(cf, 25);
+
+                if (s.EndsWith(CF.InvalidDigit))
+                    continue;
+
+                var num = Poly.ToFactoredString(new[] { a, b }, "\\pi");
+                var den = Poly.ToFactoredString(new[] { c, d }, "\\pi");
+                var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
+
+                if (!lookups.ContainsKey(s))
+                {
+                    lookups[s] = expr;
+                }
+            }
+
+            lookups["0.3183662467283164716819087"] = "\\frac {I_{\\frac 3 4}(\\frac 1 2)} {I_{\\frac {-1} 4}(\\frac 1 2)}";
+            lookups["0.3882107655677957875116585"] = "\\frac {J_0(2)} {J_1(2)}";
+            lookups["0.6420926159343307030064199"] = "cot(1)";
+            lookups["2.5759203213682219568574967"] = "\\frac {J_1(2)} {J_0(2)}";
+            lookups["3.7320508075688772935274463"] = "tan(\\frac {5\\pi} {12})";
 
             var pairs =
                 from score in Enumerable.Range(2, maxScore - 1)
