@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -26,7 +27,7 @@ namespace PlutoScarab
 
             var results = new Dictionary<string, (int[], int[], string, int)>();
 
-            // Surds
+            // mixed surds
             var surds =
                 from y in Enumerable.Range(2, maxScore - 2)
                 from twox in Enumerable.Range(1, (maxScore - y) / 2)
@@ -107,13 +108,13 @@ namespace PlutoScarab
             es =
                 from c in Enumerable.Range(-9, 19)
                 from d in Enumerable.Range(-9, 19)
-                let q = c + d * Math.E
+                let q = c + d * Math.Sqrt(Math.E)
                 where q > 0
                 from a in Enumerable.Range(-9, 19)
                 from b in Enumerable.Range(-9, 19)
                 let g = GCD(GCD(a, b), GCD(c, d))
                 let v = (a + b * Math.Sqrt(Math.E)) / q
-                where g == 1 && b != 0 && v > 0 && v != 1
+                where g == 1 && v > 0 && v != 1
                 select (a / g, b / g, c / g, d / g);
 
             foreach (var (a, b, c, d) in es)
@@ -127,7 +128,7 @@ namespace PlutoScarab
                 if (!lookups.ContainsKey(s))
                 {
                     var num = Poly.ToFactoredString(new[] { a, b }, "\\sqrt e");
-                    var den = Poly.ToFactoredString(new[] { c, d }, "e");
+                    var den = Poly.ToFactoredString(new[] { c, d }, "\\sqrt e");
                     var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
                     lookups[s] = expr;
                 }
@@ -165,6 +166,88 @@ namespace PlutoScarab
                 if (!lookups.ContainsKey(s))
                 {
                     lookups[s] = expr;
+                }
+            }
+
+            var maybes = new Dictionary<string, string>();
+
+            foreach (var (p, q) in Seq.Rationals().TakeWhile(_ => _.Item2 < 100))
+            {
+                var x = (Math.PI * p) / q;
+                var num = Poly.ToFactoredString(new[] { 0, p }, "\\pi");
+                var frac = q == 1 ? num : "\\frac{" + num + "}{" + q + "}";
+
+                void Add(string trig, Func<double, double> func)
+                {
+                    try
+                    {
+                        var y = ((decimal)func(x)).ToString();
+                        y = y.Substring(0, y.Length - 1);
+
+                        if (y.Length >= 15)
+                        {
+                            maybes[y.Substring(0, 15)] = trig + "(" + frac + ")";
+                        }
+                    }
+                    catch
+                    {
+                        Debugger.Break();
+                    }
+                }
+
+                Add("tan", Math.Tan);
+                Add("sin", Math.Sin);
+                Add("cos", Math.Cos);
+                Add("cot", x => 1 / Math.Tan(x));
+                Add("csc", x => 1 / Math.Sin(x));
+                Add("sec", x => 1 / Math.Cos(x));
+                Add("exp", Math.Exp);
+                Add("ln", Math.Log);
+                Add("sqrt", Math.Sqrt);
+                Add("tanh", Math.Tanh);
+                Add("sinh", Math.Sinh);
+                Add("cosh", Math.Cosh);
+                Add("atan", Math.Atan);
+                Add("asinh", Math.Asinh);
+
+                if (x < 1) 
+                {
+                    Add("atanh", Math.Atanh);
+                    Add("acos", Math.Acos);
+                    Add("asin", Math.Asin);
+                }
+                else if (x > 1)
+                {
+                    Add("acosh", Math.Acosh);
+                }
+
+                x = p / (double)q;
+                frac = q == 1 ? p.ToString() : "\\frac{" + p + "}{" + q + "}";
+
+                Add("tan", Math.Tan);
+                Add("sin", Math.Sin);
+                Add("cos", Math.Cos);
+                Add("cot", x => 1 / Math.Tan(x));
+                Add("csc", x => 1 / Math.Sin(x));
+                Add("sec", x => 1 / Math.Cos(x));
+                Add("exp", Math.Exp);
+                Add("ln", Math.Log);
+                Add("sqrt", Math.Sqrt);
+                Add("tanh", Math.Tanh);
+                Add("sinh", Math.Sinh);
+                Add("cosh", Math.Cosh);
+                Add("atan", Math.Atan);
+                Add("asinh", Math.Asinh);
+
+                if (x < 1) 
+                {
+                    Add("atanh", Math.Atanh);
+                    Add("acos", Math.Acos);
+                    Add("asin", Math.Asin);
+                }
+                else if (x > 1)
+                {
+                    Add("acosh", Math.Acosh);
                 }
             }
 
@@ -223,6 +306,10 @@ namespace PlutoScarab
                 var scf = "[" + first + "; " + string.Join(", ", cf.Skip(1).Take(5)) + ", ...]";
 
                 if (lookups.TryGetValue(s, out var expr))
+                {
+                    scf += " = $$" + expr + "$$";
+                }
+                else if (maybes.TryGetValue(s.Substring(0, 15), out expr))
                 {
                     scf += " = $$" + expr + "$$";
                 }
