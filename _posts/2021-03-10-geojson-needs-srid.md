@@ -59,13 +59,24 @@ on a given line segment. Without that information, you don't know what shape you
 You won't know whether a point is inside a polygon, or which side of a line segment it's on.
 Unfortunately, removing SRID in the spec tooks away the flexibility that the original GeoJson had.
 
-The reason given for removing GeoJson was the clients couldn't be expected to have the data and
-logic needed to interpret it correctly, so they essentially hard-coded SRID=4326. I don't think they
-took into account the interoperability problem they created in place of that one, and how pervasive
-the problem would be. Now clients aren't exposed to the SRID concept at all. There's no signal to
-indicate that they might not be getting the full picture. The "linear interpolation" section of the
-spec could certainly be amplified with examples to show how GeoJson is used correctly and
-incorrectly.
+GeoJson also specifies [winding order for
+polygons](https://tools.ietf.org/html/rfc7946#section-3.1.6). If it were just a serialization format
+for vertices and they didn't also specify the interpolation of points in between vertices, then
+winding order would be ambiguous. You can have a triangle oriented one way in GeoJson turn
+inside-out when you render it using straight line segments in a non-equirectangular projection. Even
+[D3.js](https://d3js.org/) which is otherwise great at handling projections, has to deal with issues
+like [this](https://stackoverflow.com/questions/49311001/d3-js-drawing-geojson-incorrectly). To be
+clear "spherical GeoJson" isn't actually a thing, and as of the time of that issue, D3 most
+definitely *was* rendering the GeoJson in a non-standard way because GeoJson spec is clear that the
+line segments don't follow spherical or geodesic paths.
+
+The reason given for removing SRS/SRID from GeoJson was the clients couldn't be expected to have the
+data and logic needed to interpret it correctly, so they essentially hard-coded SRID=4326. I don't
+think they took into account the interoperability problem they created in place of that one, and how
+pervasive the problem would be. Now clients aren't exposed to the SRID concept at all. There's no
+signal to indicate that they might not be getting the full picture. The "linear interpolation"
+section of the spec could certainly be amplified with examples to show how GeoJson is used correctly
+and incorrectly.
 
 ## Geometry vs Geography, and Densification
 
