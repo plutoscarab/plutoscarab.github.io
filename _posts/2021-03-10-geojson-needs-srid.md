@@ -56,7 +56,7 @@ sure. You're helping them misunderstand more things.
 "GeoJson is just a serialization format for my vertices!" you might say. Not according to the
 specification it's not. It's right and important that the spec spells out which points are contained
 on a given line segment. Without that information, you don't know what shape you're dealing with.
-You won't know whether a point is inside a polygon, or which side of a line segment its on.
+You won't know whether a point is inside a polygon, or which side of a line segment it's on.
 Unfortunately, removing SRID in the spec tooks away the flexibility that the original GeoJson had.
 
 The reason given for removing GeoJson was the clients couldn't be expected to have the data and
