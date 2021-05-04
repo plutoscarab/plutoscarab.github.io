@@ -371,7 +371,7 @@ type Cursor =
     // Get the next character
     member foo.Head = foo.Get(0)
 
-    // Get the next N characters
+    // Get the next characters after skipping n
     member foo.Get(n) = 
         if foo.index + n < foo.text.Length then 
             Some foo.text.[foo.index + n] 
