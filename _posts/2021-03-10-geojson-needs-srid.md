@@ -57,7 +57,7 @@ sure. You're helping them misunderstand more things.
 specification it's not. It's right and important that the spec spells out which points are contained
 on a given line segment. Without that information, you don't know what shape you're dealing with.
 You won't know whether a point is inside a polygon, or which side of a line segment it's on.
-Unfortunately, removing SRID in the spec tooks away the flexibility that the original GeoJson had.
+Unfortunately, removing SRID in the spec took away the flexibility that the original GeoJson had.
 
 GeoJson also specifies [winding order for
 polygons](https://tools.ietf.org/html/rfc7946#section-3.1.6). If it were just a serialization format
