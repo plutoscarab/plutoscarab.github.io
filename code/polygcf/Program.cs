@@ -186,7 +186,12 @@ namespace PlutoScarab
 
                         if (y.Length >= 15)
                         {
-                            maybes[y.Substring(0, 15)] = trig + "(" + frac + ")";
+                            y = y.Substring(0, 15);
+
+                            if (!maybes.ContainsKey(y))
+                            {
+                                maybes[y] = trig + "(" + frac + ")";
+                            }
                         }
                     }
                     catch
@@ -207,18 +212,18 @@ namespace PlutoScarab
                 Add("tanh", Math.Tanh);
                 Add("sinh", Math.Sinh);
                 Add("cosh", Math.Cosh);
-                Add("atan", Math.Atan);
-                Add("asinh", Math.Asinh);
+                Add("tan^{-1}", Math.Atan);
+                Add("sinh^{-1}", Math.Asinh);
 
                 if (x < 1) 
                 {
-                    Add("atanh", Math.Atanh);
-                    Add("acos", Math.Acos);
-                    Add("asin", Math.Asin);
+                    Add("tanh^{-1}", Math.Atanh);
+                    Add("cos^{-1}", Math.Acos);
+                    Add("sin^{-1}", Math.Asin);
                 }
                 else if (x > 1)
                 {
-                    Add("acosh", Math.Acosh);
+                    Add("cosh^{-1}", Math.Acosh);
                 }
 
                 x = p / (double)q;
@@ -236,26 +241,24 @@ namespace PlutoScarab
                 Add("tanh", Math.Tanh);
                 Add("sinh", Math.Sinh);
                 Add("cosh", Math.Cosh);
-                Add("atan", Math.Atan);
-                Add("asinh", Math.Asinh);
+                Add("tan^{-1}", Math.Atan);
+                Add("sinh^{-1}", Math.Asinh);
 
                 if (x < 1) 
                 {
-                    Add("atanh", Math.Atanh);
-                    Add("acos", Math.Acos);
-                    Add("asin", Math.Asin);
+                    Add("tanh^{-1}", Math.Atanh);
+                    Add("cos^{-1}", Math.Acos);
+                    Add("sin^{-1}", Math.Asin);
                 }
                 else if (x > 1)
                 {
-                    Add("acosh", Math.Acosh);
+                    Add("cosh^{-1}", Math.Acosh);
                 }
             }
 
             lookups["0.3183662467283164716819087"] = "\\frac {I_{\\frac 3 4}(\\frac 1 2)} {I_{\\frac {-1} 4}(\\frac 1 2)}";
             lookups["0.3882107655677957875116585"] = "\\frac {J_0(2)} {J_1(2)}";
-            lookups["0.6420926159343307030064199"] = "cot(1)";
             lookups["2.5759203213682219568574967"] = "\\frac {J_1(2)} {J_0(2)}";
-            lookups["3.7320508075688772935274463"] = "tan(\\frac {5\\pi} {12})";
 
             var pairs =
                 from score in Enumerable.Range(2, maxScore - 1)
