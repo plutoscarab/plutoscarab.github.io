@@ -1,0 +1,657 @@
+
+[f]
+Left = 96
+Top = 416
+Width = 52
+Height = 53
+Command = Shift(1)
+
+[g]
+Left = 150
+Top = 418
+Width = 51
+Height = 49
+Command = Shift(2)
+
+[Off]
+Left = 45
+Top = 108
+Width = 49
+Height = 53
+Command(0) = Close
+Command(1) = Minimize
+
+[Not]
+Left = 44
+Top = 171
+Width = 49
+Height = 50
+Command(0) = Not
+Command(1) = ShiftLeft
+Command(2) = TwosComplement
+
+[Round]
+Left = 44
+Top = 232
+Width = 51
+Height = 51
+Command(0) = Round
+Command(1) = Floor
+Command(2) = Ceiling
+
+[Sin]
+Left = 43
+Top = 293
+Width = 52
+Height = 54
+Command(0) = Sin
+Command(1) = Asin
+Command(2) = Toggle(4)
+Command(4) = Sinh
+Command(5) = Asinh
+Command(6) = Toggle(4)
+
+[Ln]
+Left = 42
+Top = 353
+Width = 53
+Height = 56
+Command(0) = Log(Number.E)
+Command(1) = Exp(Number.E)
+
+[Pi]
+Left = 41
+Top = 416
+Width = 54
+Height = 52
+Command(0) = Constant(Number.Pi)
+Command(1) = Constant(R0.017453292519943295769236907684886)
+Command(2) = Constant(Number.TwoPi)
+
+[Hex]
+Left = 96
+Top = 106
+Width = 52
+Height = 55
+Command(0) = NumberBase(16)
+Command(1) = NumberBase(10)
+Command(2) = NumberBase(2)
+
+[And]
+Left = 96
+Top = 169
+Width = 52
+Height = 52
+Command(0) = And
+Command(1) = ShiftRight
+
+[Int]
+Left = 95
+Top = 232
+Width = 54
+Height = 52
+Command(0) = Truncate
+Command(1) = Frac
+
+[Cos]
+Left = 97
+Top = 293
+Width = 52
+Height = 53
+Command(0) = Cos
+Command(1) = Acos
+Command(2) = Cis
+Command(4) = Cosh
+Command(5) = Acosh
+Command(6) = Cis
+
+[Log]
+Left = 97
+Top = 356
+Width = 50
+Height = 50
+Command(0) = Log(10)
+Command(1) = Exp(10)
+
+[Complex]
+Left = 150
+Top = 108
+Width = 52
+Height = 54
+Command(0) = NumberSystem(0)
+Command(1) = NumberSystem(1)
+
+[Or]
+Left = 151
+Top = 172
+Width = 50
+Height = 49
+Command(0) = Or
+Command(1) = RotateLeft
+
+[Abs]
+Left = 151
+Top = 234
+Width = 50
+Height = 48
+Command(0) = Abs
+Command(1) = Sign
+
+[Tan]
+Left = 151
+Top = 294
+Width = 50
+Height = 50
+Command(0) = Tan
+Command(1) = Atan
+Command(2) = Arg
+Command(4) = Tanh
+Command(5) = Atanh
+Command(6) = Arg
+
+[Log2]
+Left = 151
+Top = 356
+Width = 50
+Height = 50
+Command(0) = Log(2)
+Command(1) = Exp(2)
+
+[B64]
+Left = 205
+Top = 110
+Width = 49
+Height = 50
+Command(0) = WordSize(64)
+Command(1) = WordSize(32)
+Command(2) = WordSize(16)
+
+[Xor]
+Left = 205
+Top = 171
+Width = 50
+Height = 50
+Command(0) = Xor
+Command(1) = RotateRight
+
+[yCx]
+Left = 205
+Top = 234
+Width = 50
+Height = 48
+Command(0) = Binomial
+Command(1) = Permutations
+
+[Sqrt]
+Left = 204
+Top = 295
+Width = 51
+Height = 49
+Command(0) = SquareRoot
+Command(1) = Square
+Command(2) = AGM
+
+[LogX]
+Left = 204
+Top = 356
+Width = 51
+Height = 50
+Command(0) = LogX
+Command(1) = Power
+
+[MR]
+Left = 205
+Top = 418
+Width = 50
+Height = 49
+Command(0) = StatsTotal
+Command(1) = ClearStats
+
+[RAN]
+Left = 259
+Top = 110
+Width = 48
+Height = 50
+Command(0) = UniformRandom
+Command(1) = GaussianRandom
+
+[NRM]
+Left = 258
+Top = 171
+Width = 51
+Height = 50
+Command(0) = NormDist
+Command(1) = NormInv
+
+[Recip]
+Left = 258
+Top = 234
+Width = 51
+Height = 48
+Command(0) = Reciprocal
+Command(1) = Mod
+
+[Factorial]
+Left = 258
+Top = 295
+Width = 50
+Height = 49
+Command(0) = Factorial
+Command(1) = Gamma
+Command(2) = DoubleFactorial
+
+[LogGamma]
+Left = 258
+Top = 355
+Width = 50
+Height = 51
+Command(0) = LogGamma
+Command(1) = Root
+
+[MPlus]
+Left = 259
+Top = 419
+Width = 49
+Height = 48
+Command(0) = StatsAdd
+Command(1) = StatsSubtract
+
+[Store]
+Left = 312
+Top = 110
+Width = 50
+Height = 50
+Command(0) = Shift(8)
+Command(1) = Shift(16)
+
+[Recall]
+Left = 312
+Top = 172
+Width = 50
+Height = 49
+Command(0) = Shift(32)
+Command(1) = Record
+
+[Divide]
+Left = 311
+Top = 234
+Width = 51
+Height = 48
+Command = Divide
+
+[Multiply]
+Left = 312
+Top = 295
+Width = 50
+Height = 49
+Command = Multiply
+
+[Minus]
+Left = 312
+Top = 356
+Width = 50
+Height = 50
+Command = Subtract
+
+[Plus]
+Left = 312
+Top = 419
+Width = 50
+Height = 48
+Command(0) = Add
+Command(1) = StatsMean
+Command(2) = StatsCount
+
+[LetterD]
+Left = 366
+Top = 110
+Width = 49
+Height = 50
+Command(0) = Digit('D')
+Command(1) = ClearAll
+Command(8) = Store(13)
+Command(16) = Assign(13)
+Command(32) = Recall(13)
+Command(64) = Exchange(13)
+
+[LetterA]
+Left = 365
+Top = 171
+Width = 50
+Height = 50
+Command(0) = Digit('A')
+Command(8) = Store(10)
+Command(16) = Assign(10)
+Command(32) = Recall(10)
+Command(64) = Exchange(10)
+
+[Digit7]
+Left = 365
+Top = 234
+Width = 50
+Height = 48
+Command(0) = Digit('7')
+Command(8) = Store(7)
+Command(16) = Assign(7)
+Command(32) = Recall(7)
+Command(64) = Exchange(7)
+
+[Digit4]
+Left = 365
+Top = 295
+Width = 50
+Height = 49
+Command(0) = Digit('4')
+Command(8) = Store(4)
+Command(16) = Assign(4)
+Command(32) = Recall(4)
+Command(64) = Exchange(4)
+
+[Digit1]
+Left = 366
+Top = 356
+Width = 49
+Height = 50
+Command = Digit('1')
+Command(8) = Store(1)
+Command(16) = Assign(1)
+Command(32) = Recall(1)
+Command(64) = Exchange(1)
+
+[Digit0]
+Left = 366
+Top = 417
+Width = 49
+Height = 50
+Command(0) = Digit('0')
+Command(1) = StatsStdDev
+Command(2) = StatsSampleStdDev
+Command(8) = Store(0)
+Command(16) = Assign(0)
+Command(32) = Recall(0)
+Command(64) = Exchange(0)
+
+[LetterE]
+Left = 419
+Top = 110
+Width = 50
+Height = 50
+Command(0) = Digit('E')
+Command(1) = ClearStored
+Command(8) = Store(14)
+Command(16) = Assign(14)
+Command(32) = Recall(14)
+Command(64) = Exchange(14)
+
+[LetterB]
+Left = 419
+Top = 171
+Width = 50
+Height = 50
+Command = Digit('B')
+Command(8) = Store(11)
+Command(16) = Assign(11)
+Command(32) = Recall(11)
+Command(64) = Exchange(11)
+
+[Digit8]
+Left = 419
+Top = 233
+Width = 50
+Height = 49
+Command = Digit('8')
+Command(8) = Store(8)
+Command(16) = Assign(8)
+Command(32) = Recall(8)
+Command(64) = Exchange(8)
+
+[Digit5]
+Left = 419
+Top = 295
+Width = 50
+Height = 49
+Command = Digit('5')
+Command(8) = Store(5)
+Command(16) = Assign(5)
+Command(32) = Recall(5)
+Command(64) = Exchange(5)
+
+[Digit2]
+Left = 419
+Top = 356
+Width = 50
+Height = 49
+Command = Digit('2')
+Command(8) = Store(2)
+Command(16) = Assign(2)
+Command(32) = Recall(2)
+Command(64) = Exchange(2)
+
+[Dot]
+Left = 419
+Top = 418
+Width = 50
+Height = 49
+Command = Decimal
+
+[LetterF]
+Left = 473
+Top = 110
+Width = 49
+Height = 50
+Command(0) = Digit('F')
+Command(1) = ClearStack
+Command(8) = Store(15)
+Command(16) = Assign(15)
+Command(32) = Recall(15)
+Command(64) = Exchange(15)
+
+[LetterC]
+Left = 473
+Top = 171
+Width = 49
+Height = 50
+Command = Digit('C')
+Command(8) = Store(12)
+Command(16) = Assign(12)
+Command(32) = Recall(12)
+Command(64) = Exchange(12)
+
+[Digit9]
+Left = 472
+Top = 233
+Width = 50
+Height = 49
+Command = Digit('9')
+Command(8) = Store(9)
+Command(16) = Assign(9)
+Command(32) = Recall(9)
+Command(64) = Exchange(9)
+
+[Digit6]
+Left = 473
+Top = 295
+Width = 49
+Height = 49
+Command = Digit('6')
+Command(8) = Store(6)
+Command(16) = Assign(6)
+Command(32) = Recall(6)
+Command(64) = Exchange(6)
+
+[Digit3]
+Left = 473
+Top = 355
+Width = 49
+Height = 51
+Command = Digit('3')
+Command(8) = Store(3)
+Command(16) = Assign(3)
+Command(32) = Recall(3)
+Command(64) = Exchange(3)
+
+[ChangeSign]
+Left = 473
+Top = 418
+Width = 50
+Height = 49
+Command = ChangeSign
+
+[Backspace]
+Left = 526
+Top = 110
+Width = 50
+Height = 50
+Command(0) = Backspace
+Command(1) = Pop
+
+[Last]
+Left = 526
+Top = 171
+Width = 50
+Height = 50
+Command(0) = LastX
+Command(1) = ExchangeXY
+Command(2) = Shift(64)
+
+[i]
+Left = 526
+Top = 233
+Width = 50
+Height = 49
+Command(0) = ToggleImaginary
+Command(1) = RealPart
+Command(2) = ImaginaryPart
+
+[EEX]
+Left = 526
+Top = 295
+Width = 50
+Height = 49
+Command = EnterExponent
+
+[Enter]
+Left = 526
+Top = 355
+Width = 50
+Height = 111
+Command = EnterKey
+
+[DecMode]
+Base = 10
+Left = 59
+Top = 57
+Width = 23
+Height = 12
+
+[HexMode]
+Base = 16
+Left = 82
+Top = 57
+Width = 22
+Height = 13
+
+[BinMode]
+Base = 2
+Left = 104
+Top = 57
+Width = 19
+Height = 13
+
+[CpxMode]
+NumberSystem = 0
+Left = 124
+Top = 57
+Width = 23
+Height = 13
+
+[RealMode]
+NumberSystem = 1
+Left = 147
+Top = 57
+Width = 25
+Height = 13
+
+[B64Mode]
+WordSize = 64
+Left = 173
+Top = 57
+Width = 19
+Height = 13
+
+[B32Mode]
+WordSize = 32
+Left = 193
+Top = 57
+Width = 20
+Height = 13
+
+[B16Mode]
+WordSize = 16
+Left = 213
+Top = 57
+Width = 20
+Height = 13
+
+[HypIndicator]
+Indicator = 4
+Left = 234
+Top = 57
+Width = 21
+Height = 13
+
+[fIndicator]
+Indicator = 1
+Left = 255
+Top = 57
+Width = 8
+Height = 13
+
+[gIndicator]
+Indicator = 2
+Left = 263
+Top = 59
+Width = 10
+Height = 13
+
+[StoIndicator]
+Indicator = 8
+Left = 274
+Top = 57
+Width = 20
+Height = 13
+
+[RclIndicator]
+Indicator = 32
+Left = 295
+Top = 56
+Width = 21
+Height = 14
+
+[AsgnIndicator]
+Indicator = 16
+Left = 316
+Top = 57
+Width = 30
+Height = 13
+
+[NumericDisplay]
+Mode = -1
+Left = 57
+Top = 38
+Width = 509
+Height = 21
+
+[RecordingIndicator]
+Mode = 99
+Left = 347
+Top = 57
+Width = 21
+Height = 13
+
+[ExchIndicator]
+Indicator = 64
+Left = 369
+Top = 57
+Width = 19
+Height = 12
