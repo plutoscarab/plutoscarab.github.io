@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width">
+        <title>WebGL demo</title>
+        <script src="gpgpu.js"></script>
+
+        <script id="show" type="x-shader/x-fragment">
+            #define XY gl_FragCoord.xy
+            uniform sampler2D data;
+            uniform sampler2D noise;
+            uniform float time;  
+
+            void main() {
+                vec2 scale = 1. / vec2(W, H);
+                vec2 texCoord = XY * scale;
+                vec4 result = texture2D(data, texCoord);
+                vec2 field = result.rg;
+                float charge = result.a;
+                float potential = result.b;
+                float mag = length(field);
+                float amt = sqrt(mag) * .02;
+                vec2 dir = normalize(field);
+                float sum = 0.0;
+                vec2 offset = -15.0 * dir; // + dir * 10.0 * mod(time, .5);
+
+                for (int i = 0; i <= 30; i++) {
+                    sum += texture2D(noise, (XY + offset) * scale).r;
+                    offset += dir;
+                }
+                
+                sum *= amt / 31.0;
+
+                // field lines
+                vec3 pixel = (1.0 - sum) * vec3(1, 1, 1);
+
+                // potential lines
+                float dpx = texture2D(data, texCoord + vec2(.5, .0) * scale).b - texture2D(data, texCoord + vec2(-.5, .0) * scale).b;
+                float dpy = texture2D(data, texCoord + vec2(.0, .5) * scale).b - texture2D(data, texCoord + vec2(.0, -.5) * scale).b;
+                float dp = sqrt(pow(dpx, 2.0) + pow(dpy, 2.0));
+                dp = dp / 60.0;
+                potential /= 60.0;
+                potential = mod(potential, 1.0) - .5;
+                float p = clamp(1.0 - abs(potential) / dp, 0.0, 1.0);
+                pixel = (1.0 - p) * pixel + p * vec3(.7, .7, 0);
+
+                // charge
+                vec3 chg = vec3(charge + .5, .5 - charge, .5 - charge);
+                p = abs(charge);
+                pixel = (1.0 - p) * pixel + p * chg;
+
+                gl_FragColor = vec4(pixel, 1.0);
+            }
+        </script>
+
+        <script id="computeField" type="x-shader/x-fragment">
+            #define XY gl_FragCoord.xy
+            uniform sampler2D arena;
+
+            void main() {
+                vec2 scale = 1. / vec2(W, H);
+                vec2 field = vec2(0.0, 0.0);
+                float potential = 0.0;
+
+                for (int y = 0; y < H; y++) {
+                    for (int x = 0; x < W; x++) {
+                        vec2 pos = vec2(x, y) * scale;
+                        vec4 values = texture2D(arena, pos);
+                        vec2 delta = XY * scale - pos;
+                        float len = length(delta);
+
+                        if (len > 0.0) {
+                            float charge = values.r;
+                            float amt = charge / pow(len, 2.0);
+                            field += amt * delta / len;
+                            potential += charge / len;
+                        }
+                    }
+                }
+
+                float charge = texture2D(arena, XY * scale).r;
+                gl_FragColor = vec4(field, potential, charge);
+            }
+        </script>
+        
+        <script>
+            function updateFieldNoise(noise, gl, frameBuffer) {
+                var texture = frameBuffer.texture;
+                var W = texture.width;
+                var H = texture.height;
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, W, H, gl.LUMINANCE, gl.UNSIGNED_BYTE, noise);
+            }
+
+            function initFieldNoise(frameBuffer) {
+                var texture = frameBuffer.texture;
+                var W = texture.width;
+                var H = texture.height;
+                var L = W * H;
+                var fieldNoise = new Uint8Array(L);
+
+                for (var i = 0; i < L; i++)
+                    fieldNoise[i] = Math.round(Math.random() * 255);
+
+                return fieldNoise;
+            }
+
+            function perturbFieldNoise(noise, frameBuffer) {
+                var texture = frameBuffer.texture;
+                var W = texture.width;
+                var H = texture.height;
+                var L = W * H;
+                
+                for (var i = 0; i < L; i++)
+                {
+                    var x = noise[i] + (Math.random() > .5 ? +1 : -1);
+                    noise[i] = Math.max(0, Math.min(255, x));
+                }
+            }
+
+            function initCharges(frameBuffer) {
+                var texture = frameBuffer.texture;
+                var W = texture.width;
+                var H = texture.height;
+                
+                var L = W * H;
+                var charges = new Float32Array(L);
+
+                for (var x = W / 8; x < 7 * W / 8; x++)
+                {
+                    var y = Math.round(H / 3);
+                    //charges[y * W + x] = 1.0;
+                    y = Math.round(2 * H / 3);
+                    //charges[y * W + x] = -1.0;
+                }
+
+                for (var i = 0; i < 100; i++)
+                {
+                    //charges[Math.floor(L * Math.random())] = Math.random() < .5 ? -1 : +1;
+                }
+
+                return charges;
+            }
+
+            function updateArena(charges, gl, frameBuffer) {
+                var texture = frameBuffer.texture;
+                var W = texture.width;
+                var H = texture.height;
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                
+                var L = W * H;
+                var arena = new Float32Array(4 * L);
+                for (var i = 0; i < L; i++)
+                {
+                    arena[4 * i] = charges[i];
+                }
+
+                gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, W, H, gl.RGBA, gl.FLOAT, arena);
+            }
+
+            // This is the main script that will run when the website loads
+            function main()
+            {
+                // Retrieve a handle to the canvas element
+                var canvas = $("maincanvas");
+
+                // Set up mouse pointer following.
+                var rect = canvas.getBoundingClientRect();
+                var qindex = 0;
+                var leftIsDown = false;
+                var middleIsDown = false;
+                var rightIsDown = false;
+                var mouse = {x: 0, y: 0, i: 0, j: 0};
+
+                document.onmousemove = function(event) {
+                    mouse.x = (event.pageX - rect.left) / canvas.width;
+                    mouse.y = (rect.bottom - event.pageY) / canvas.height;
+                    mouse.i = Math.floor(mouse.x * arena.width);
+                    mouse.j = Math.floor(mouse.y * arena.height);
+
+                    if (leftIsDown) {
+                        charges[mouse.i + arena.width * mouse.j] = 1.0;
+                    }
+
+                    if (middleIsDown) {
+                        charges[mouse.i + arena.width * mouse.j] = 0.0;
+                    }
+
+                    if (rightIsDown) {
+                        charges[mouse.i + arena.width * mouse.j] = -1.0;
+                    }
+                }
+
+                document.onmousedown = function(event) {
+                    if (event.button === 0) {
+                        leftIsDown = true;
+                        charges[mouse.i + arena.width * mouse.j] = 1.0;
+                    }
+                    else if (event.button === 1) {
+                        middleIsDown = true;
+                        charges[mouse.i + arena.width * mouse.j] = 0.0;
+                    }
+                    else if (event.button === 2) {
+                        rightIsDown = true;
+                        charges[mouse.i + arena.width * mouse.j] = -1.0;
+                    }
+                }
+
+                document.onmouseup = function(event) {
+                    if (event.button === 0) {
+                        leftIsDown = false;
+                    } else if (event.button === 1) {
+                        middleIsDown = false;
+                    } else if (event.button === 2) {
+                        rightIsDown = false;
+                    }
+                }
+
+                // Create a WebGL context on the canvas, abort if fail
+                var gl = canvas.getContext("webgl");
+
+                if (!gl) {
+                    alert("Browser does not support WebGL");
+                }
+
+                gl.getExtension("OES_texture_float");
+                gl.getExtension("OES_texture_float_linear");
+
+                gl.viewport(0, 0,
+                    canvas.width = canvas.clientWidth,
+                    canvas.height = canvas.clientHeight);
+
+                gl.width  = canvas.width;
+                gl.height = canvas.height;
+
+                // Create a vertex area with two triangles to cover the canvas.
+                gl.screen_quad = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, gl.screen_quad);
+
+                gl.bufferData(gl.ARRAY_BUFFER,
+                    new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),
+                    gl.STATIC_DRAW);
+
+                // Create render targets for computed noise.
+                var fieldNoise = newBasicFramebuffer(gl, {format: gl.LUMINANCE, type: gl.UNSIGNED_BYTE, wrap: gl.REPEAT});
+                var field = newBasicFramebuffer(gl, {size: 64, type: gl.FLOAT}); // R,G = field vector, B = potential, A = charge
+                var arena = newBasicFramebuffer(gl, {size: 64, type: gl.FLOAT, wrap: gl.CLAMP_TO_EDGE}); // R = charge, G = conductivity
+            
+                var noise = initFieldNoise(fieldNoise);
+                var charges = initCharges(arena);
+            
+                // Get the fragment shaders.
+                var show   = getRasterProgram(gl, 'show');
+                var computeField = getRasterProgram(gl, "computeField", {W: arena.width, H: arena.height});
+                var lastFrame = performance.now();
+                var frameCount = 0;
+
+                function simulate() {
+                    setTimeout(function() {
+                        updateArena(charges, gl, arena);
+                        computeField({arena: arena}, field);
+                        requestAnimationFrame(simulate);
+                    }, 1.0)
+                }
+
+                simulate();
+
+                function animate() {
+                    setTimeout(function() {
+                        perturbFieldNoise(noise, fieldNoise);
+                        updateFieldNoise(noise, gl, fieldNoise);
+                        show({data: field, noise: fieldNoise, time: performance.now() / 1000.0});
+                        frameCount++;
+                        var now = performance.now();
+                        var elapsed = now - lastFrame;
+
+                        if (elapsed >= 500.0) {
+                            var fps = frameCount * 1000.0 / elapsed;
+                            console.log("FPS = " + fps);
+                            lastFrame = now;
+                            frameCount = 0;
+                        }
+
+                        requestAnimationFrame(animate);
+                    }, 1.0);
+                }
+
+                animate();
+            
+            }
+        </script>
+
+        <style>
+            #maincanvas { width: 512px; height: 512px }
+        </style>
+    </head>
+
+    <body onload="javascript:main()">
+        <canvas id="maincanvas" oncontextmenu="return false;"></canvas>
+    </body>
+
+</html>
+    
