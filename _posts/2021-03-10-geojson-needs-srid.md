@@ -119,3 +119,9 @@ fast calculations, and tipping us off that we need to densify if we want geograp
 real-life GIS data it might as well be. There's no reason to complicate and slow down our
 computations just for the edge case of applications that need geodesic paths. Those edge cases are
 the ones that should be adapting to the normal case, via the use of densification.
+
+## The Good News
+
+The good news is that GeoJson is going to be fixed, or least extended. OGC has formed a [working
+group](https://portal.ogc.org/files/95319) to improve GeoJson, and support for CRSs is one of their 
+key goals.

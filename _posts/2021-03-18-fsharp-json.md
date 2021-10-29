@@ -1,11 +1,11 @@
 ---
-title: GeoJson and JSON in F#
-tags: GIS, JSON, F#
+title: JSON in F#
+tags: JSON, F#
 ---
 
 I just started learning [F#](https://fsharp.org/). I learn new programming languages best when I do
-something useful with them, and I decided to make a [GeoJson](https://tools.ietf.org/html/rfc7946)
-parser. And I don't mean make a GeoJson grammar using [FParsec](https://www.quanttec.com/fparsec/)
+something useful with them, and I decided to make a [JSON](https://tools.ietf.org/html/rfc7159)
+parser. And I don't mean make a JSON grammar using [FParsec](https://www.quanttec.com/fparsec/)
 or some other library, I mean do the whole thing: make as much of FParsec as I need myself.
 
 I wanted to be sure to do the Unicode stuff right, but by including it here I risk obscuring the
@@ -21,8 +21,7 @@ start with.
 
 ## JSON Model
 
-GeoJson is [JSON](https://tools.ietf.org/html/rfc7159), so first we need a JSON parser, and before
-that we need to be able to model JSON data. I'm going to do sort-of
+Before we make a parser we need to be able to model JSON data. I'm going to do sort-of
 [I-JSON](https://tools.ietf.org/html/rfc7493) to make things slightly easier, which means only doing
 float64-compatible numbers, and no invalid surrogate sequences in strings. I-JSON also wants unique
 member names in objects, but I have some use cases for duplicate member names so I'm not going to do
@@ -74,8 +73,7 @@ let tourEiffel =
     ]
 ```
 
-This is just to show what this almost-JSON looks like in F#. Later we'll make a GeoJson model like
-we did for JSON, and then automate the conversion from the GeoJson model to the JSON model.
+This is just to show what this almost-JSON looks like in F#. 
 
 ## JSON Text Representation
 
@@ -740,7 +738,3 @@ let jparser s =
     | Ok (_, _, c) when c.index <> s.Length -> Err("end of text", c.index)
     | _ -> result
 ```
-
-## GeoJSON
-
-Coming soon.
