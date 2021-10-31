@@ -2,14 +2,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            "name": "fsharp tests",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/tests/fsharp/bin/Debug/net5.0/tests.dll",
             "args": [],
             "cwd": "${workspaceFolder}/tests/fsharp",
-            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "csharp tests",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "cbuild",
+            "program": "${workspaceFolder}/tests/blog/bin/Debug/net5.0/tests.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/tests/blog",
             "console": "internalConsole",
             "stopAtEntry": false
         }
