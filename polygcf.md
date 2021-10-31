@@ -6,7 +6,7 @@ tag: math
 Intended to be found by search engines when a value or terms of a simple
 continued fraction are known but the generalized continued fraction is unknown.
 These are the first 20,490 values with polynomials of lowest total score.
-Polynomal score is equal to its degree plus the sum of absolute values of its coefficients.
+Polynomial score is equal to its degree plus the sum of absolute values of its coefficients.
 
 $$
 x = f(0) + \cfrac {g(0)} {f(1) + \cfrac {g(1)} {f(2) + \ddots}}
