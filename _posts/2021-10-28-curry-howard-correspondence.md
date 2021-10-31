@@ -192,10 +192,9 @@ a proof without using a truth table, you're doing classical logic
 not constructive logic. It's neither good or bad, it's just 
 playing by a different set of rules.
 
-## Dependent Types
+## Universal Quantifer
 
-So far none of this has required dependent types. This comes into
-play when we try to implement the Universal Qualifier which is used
+The Universal Qualifier is used
 to form propositions like "for all instances x of some type, the
 proposition p(x) holds".
 
