@@ -237,6 +237,11 @@ public sealed class ForAll<A, P>
 }
 ```
 
+Because C# doesn't have dependent types, it means we have to specify, in advance,
+the type of the proposition being returned. This means that `ForAll` is just taking
+a `Func<A, P>` and wrapping it in `Intro` and `Elim`. So in C#, `ForAll` is also
+just `Func`! But once again, it makes things a little more readible.
+
 Now we can prove some things implied by universal quantification, such as
 
 ```csharp
