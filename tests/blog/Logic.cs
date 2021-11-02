@@ -70,8 +70,27 @@ namespace tests
 
         // Conjunction distributivity
         // p ∧ (q ∨ r) ↔ (p ∧ q) ∨ (p ∧ r)
-        //public static Iff<> AndDist<P, Q, R>() =>
-        //    ;
+        public static Iff<And<P, Or<Q, R>>, Or<And<P, Q>, And<P, R>>> AndDist<P, Q, R>() =>
+            Iff<And<P, Or<Q, R>>, Or<And<P, Q>, And<P, R>>>.Intro(
+                (And<P, Or<Q, R>> h) => h.Right.Elim<Or<And<P, Q>, And<P, R>>>(
+                    q => Or<And<P, Q>, And<P, R>>.Intro((h.Left, q)),
+                    r => Or<And<P, Q>, And<P, R>>.Intro((h.Left, r))),
+                (Or<And<P, Q>, And<P, R>> h) => h.Elim<And<P, Or<Q, R>>>(
+                    (And<P, Q> pq) => (pq.Left, pq.Right),
+                    (And<P, R> pr) => (pr.Left, pr.Right)));
+
+        // Disjunction distributivity
+        // p || (q && r) <-> (p || q) && (p || r)
+        public static Iff<Or<P, And<Q, R>>, And<Or<P, Q>, Or<P, R>>> OrDist<P, Q, R>() =>
+            Iff<Or<P, And<Q, R>>, And<Or<P, Q>, Or<P, R>>>.Intro(
+                (Or<P, And<Q, R>> h) => h.Elim<And<Or<P, Q>, Or<P, R>>>(
+                    p => (p, p),
+                    qr => (qr.Left, qr.Right)),
+                (And<Or<P, Q>, Or<P, R>> h) => h.Left.Elim<Or<P, And<Q, R>>>(
+                    p => p,
+                    q => h.Right.Elim<Or<P, And<Q, R>>>(
+                        p => p,
+                        r => Or<P, And<Q, R>>.Intro((q, r)))));
 
         // Non-contradiction
         // ~(p && ~p)
@@ -84,6 +103,81 @@ namespace tests
             h.Elim<Not<And<P, Q>>>(
                 np => pq => np(pq.Left),
                 nq => pq => nq(pq.Right));
+
+        // (p → (q → r)) ↔ (p ∧ q → r)
+        public static Iff<Implies<P, Implies<Q, R>>, Implies<And<P, Q>, R>> Example1<P, Q, R>() =>
+            Iff<Implies<P, Implies<Q, R>>, Implies<And<P, Q>, R>>.Intro(
+                (Implies<P, Implies<Q, R>> h) =>
+                    (And<P, Q> g) => h(g.Left)(g.Right),
+                (Implies<And<P, Q>, R> h) =>
+                    p => q => h((p, q)));
+
+        // ((p ∨ q) → r) ↔ (p → r) ∧ (q → r)
+        public static Iff<Implies<Or<P, Q>, R>, And<Implies<P, R>, Implies<Q, R>>> Example2<P, Q, R>() =>
+            Iff<Implies<Or<P, Q>, R>, And<Implies<P, R>, Implies<Q, R>>>.Intro(
+                (Implies<Or<P, Q>, R> h) => (
+                    p => h(p),
+                    q => h(q)),
+                (And<Implies<P, R>, Implies<Q, R>> h) =>
+                    (Or<P, Q> g) => g.Elim<R>(
+                        p => h.Left(p),
+                        q => h.Right(q)));
+
+        // ¬(p ∨ q) ↔ ¬p ∧ ¬q
+        public static Iff<Not<Or<P, Q>>, And<Not<P>, Not<Q>>> Example3<P, Q, R>() =>
+            Iff<Not<Or<P, Q>>, And<Not<P>, Not<Q>>>.Intro(
+                (Not<Or<P, Q>> h) => (p => h(p), q => h(q)),
+                (And<Not<P>, Not<Q>> h) => (Or<P, Q> pq) => pq.Elim<False>(
+                    p => h.Left(p),
+                    q => h.Right(q)));
+
+        // ¬p ∨ ¬q → ¬(p ∧ q)
+        public static Not<And<P, Q>> Example4<P, Q, R>(Or<Not<P>, Not<Q>> h) =>
+            (And<P, Q> pq) => h.Elim<False>(
+                np => np(pq.Left),
+                nq => nq(pq.Right));
+
+        // p ∧ ¬q → ¬(p → q)
+        public static Not<Implies<P, Q>> Example6<P, Q>(And<P, Not<Q>> h) =>
+            (Implies<P, Q> g) => h.Right(g(h.Left));
+
+        // ¬p → (p → q)
+        public static Implies<P, Q> Example7<P, Q>(Not<P> h) =>
+            p => False.Elim<P, Q>(p, h);
+
+        // (¬p ∨ q) → (p → q)
+        public static Implies<P, Q> Example8<P, Q>(Or<Not<P>, Q> h) =>
+            p => h.Elim<Q>(
+                np => False.Elim<P, Q>(p, np),
+                q => q);
+
+        // p ∨ false ↔ p
+        public static Iff<Or<P, False>, P> Example9<P>() =>
+            Iff<Or<P, False>, P>.Intro(
+                (Or<P, False> h) => h.Elim<P>(
+                    p => p,
+                    f => f.Elim<P>()),
+                p => p);
+
+        //  p ∧ false ↔ false
+        public static Iff<And<P, False>, False> Example10<P>() =>
+            Iff<And<P, False>, False>.Intro(
+                (And<P, False> h) => h.Right,
+                f => f.Elim<And<P, False>>()
+            );
+
+        // This one is a real tongue-twister.
+        // ¬(p ↔ ¬p)
+        public static Not<Iff<P, Not<P>>> Example11<P>() =>
+            (Iff<P, Not<P>> h) => 
+            {
+                Not<P> np = p => h.Forward(p)(p);
+                return np(h.Reverse(np));
+            };
+
+        // (p → q) → (¬q → ¬p)
+        public static Implies<Not<Q>, Not<P>> Example12<P, Q>(Implies<P, Q> h) =>
+            nq => ModusTollens<P, Q>((h, nq));
 
         // Law of Excluded Middle
         // p || ~p
@@ -111,5 +205,43 @@ namespace tests
             ForAll<A, Predicate<A, P>>.Intro(
                 t => h.Elim(t).Left
             );
+
+        // (p → r ∨ s) → ((p → r) ∨ (p → s))
+        public static Or<Implies<P, R>, Implies<P, S>> Example1<P, R, S>(Implies<P, Or<R, S>> h) =>
+            LEM<P>().Elim<Or<Implies<P, R>, Implies<P, S>>>(
+                p => h(p).Elim<Or<Implies<P, R>, Implies<P, S>>>(
+                    r => Or<Implies<P, R>, Implies<P, S>>.Intro(p => r),
+                    s => Or<Implies<P, R>, Implies<P, S>>.Intro(p => s)
+                ),
+                np => Or<Implies<P, R>, Implies<P, S>>.Intro(p => False.Elim<P, R>(p, np))
+            );
+
+        //  ¬(p → q) → p ∧ ¬q
+        public static And<P, Not<Q>> Example2<P, Q>(Not<Implies<P, Q>> h) =>
+            LEM<P>().Elim<And<P, Not<Q>>>(
+                p => LEM<Q>().Elim<And<P, Not<Q>>>(
+                    q => h(p => q).Elim<And<P, Not<Q>>>(),
+                    nq => (p, nq)),
+                np => LEM<Q>().Elim<And<P, Not<Q>>>(
+                    q => h(p => q).Elim<And<P, Not<Q>>>(),
+                    nq => h(p => np(p).Elim<Q>()).Elim<And<P, Not<Q>>>()));
+
+        // (p → q) → (¬p ∨ q)
+        public static Or<Not<P>, Q> Example3<P, Q>(Implies<P, Q> h) =>
+            LEM<P>().Elim<Or<Not<P>, Q>>(
+                p => Or<Not<P>, Q>.Intro(h(p)),
+                np => np);
+
+        // (¬q → ¬p) → (p → q)
+        public static Implies<P, Q> Example4<P, Q>(Implies<Not<Q>, Not<P>> h) =>
+            p => LEM<Q>().Elim<Q>(
+                q => q,
+                nq => False.Elim<P, Q>(p, h(nq)));
+
+        // ((p → q) → p) → p
+        public static P Peirce<P, Q>(Implies<Implies<P, Q>, P> h) =>
+            LEM<P>().Elim<P>(
+                p => p,
+                np => h(p => False.Elim<P, Q>(p, np)));
     }
 }

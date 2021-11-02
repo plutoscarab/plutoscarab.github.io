@@ -11,6 +11,7 @@ namespace Logic
         // Contradiction lets us prove anything. If we're given
         // a proof of P and ¬P, we can prove any Q.
         public static Q Elim<P, Q>(P p, Not<P> np) => default;
+        public Q Elim<Q>() => default;
     }
 
     // The definition of ¬ (not). Even though False can't be instantiated,
@@ -52,8 +53,8 @@ namespace Logic
     {
         public static Iff<P, Q> Intro(Implies<P, Q> pr, Implies<Q, P> qr) => new Iff<P, Q>();
         private Iff() { }
-        public Implies<P, Q> Left => default;
-        public Implies<Q, P> Right => default;
+        public Implies<P, Q> Forward => default;
+        public Implies<Q, P> Reverse => default;
     }
 
     // Predicate (same as Func because no dependent types in C#)
