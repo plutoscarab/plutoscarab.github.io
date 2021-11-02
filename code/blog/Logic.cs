@@ -4,8 +4,10 @@ using System;
 namespace Logic
 {
     // A class that can't be instantiated in any normal way.
-    public static class False
+    public sealed class False
     { 
+        private False() { }
+        
         // Contradiction lets us prove anything. If we're given
         // a proof of P and ¬P, we can prove any Q.
         public static Q Elim<P, Q>(P p, Not<P> np) => default;
@@ -26,6 +28,7 @@ namespace Logic
         // and right sides. They've already been proven so we don't need the
         // details. We just care about their types.
         public static And<P, Q> Intro(P p, Q q) => new And<P, Q>();
+        public static implicit operator And<P, Q>((P, Q) pq) => new And<P, Q>();
         private And() { }
 
         // This isn't cheating. if P ∧ Q, then we know that P and we know that Q by definition of ∧.
@@ -38,6 +41,8 @@ namespace Logic
     {
         public static Or<P, Q> Intro(P _) => new Or<P, Q>();
         public static Or<P, Q> Intro(Q _) => new Or<P, Q>();
+        public static implicit operator Or<P, Q>(P _) => new Or<P, Q>();
+        public static implicit operator Or<P, Q>(Q _) => new Or<P, Q>();
         public R Elim<R>(Implies<P, R> pr, Implies<Q, R> qr) => default;
         private Or() { }
     }
@@ -51,7 +56,8 @@ namespace Logic
         public Implies<Q, P> Right => default;
     }
 
-    public delegate P Predicate<A, P>(A x);
+    // Predicate (same as Func because no dependent types in C#)
+    public delegate P Predicate<A, P>(A _);
 
     public sealed class ForAll<A, P>
     {
