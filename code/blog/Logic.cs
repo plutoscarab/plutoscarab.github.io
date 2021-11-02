@@ -51,13 +51,15 @@ namespace Logic
         public Implies<Q, P> Right => default;
     }
 
+    public delegate P Predicate<A, P>(A x);
+
     public sealed class ForAll<A, P>
     {
-        public static ForAll<A, P> Intro(Func<A, P> p) => new ForAll<A, P>(p);
+        public static ForAll<A, P> Intro(Predicate<A, P> p) => new ForAll<A, P>(p);
 
-        private readonly Func<A, P> p;
+        private readonly Predicate<A, P> p;
 
-        private ForAll(Func<A, P> p)
+        private ForAll(Predicate<A, P> p)
         {
             this.p = p;
         }
