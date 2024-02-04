@@ -266,6 +266,25 @@ namespace PlutoScarab
                 return s[..(s.IndexOf('.') + 26)];
             }
 
+            MpfrFloat BesselI(MpfrFloat a, MpfrFloat x)
+            {
+                MpfrFloat sum = 0;
+                uint m = 0;
+
+                while (true)
+                {
+                    var t = MpfrFloat.Power(x / 2, 2 * m + a) / MpfrFloat.Factorial(m) / MpfrFloat.Gamma(m + a + 1);
+                    sum += t;
+
+                    if (MpfrFloat.Abs(t, null) < 1e-50)
+                        break;
+
+                    ++m;
+                }
+
+                return sum;
+            }
+
             for (var n = 1; n < 20; n++)
             {
                 for (var d = 1; d < 20; d++)
@@ -295,6 +314,18 @@ namespace PlutoScarab
                             else
                                 lookups[s] = $"\\frac {{J_{k}(\\frac {n} {d})}} {{J_{k + 1}(\\frac {n} {d})}}";
                         }
+
+                        y = BesselI(x, .5) / BesselI(x - 1, .5);
+                        s = StrIndex(y);
+                        lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(\\frac 1 2)}} {{I_{{\\frac {n - d} {d}}}(\\frac 1 2)}}";
+
+                        y = BesselI(x, 1) / BesselI(x - 1, 1);
+                        s = StrIndex(y);
+
+                        if (d == 1)
+                            lookups[s] = $"\\frac {{I_{{{n}}}(1)}} {{I_{{{n - d}}}(1)}}";
+                        else
+                            lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(1)}} {{I_{{\\frac {n - d} {d}}}(1)}}";
                     }
                 }
             }
