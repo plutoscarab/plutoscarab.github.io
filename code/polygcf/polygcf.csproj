@@ -9,4 +9,9 @@
     <ProjectReference Include="../blog/blog.csproj" />
   </ItemGroup>
 
+ <ItemGroup>
+   <PackageReference Include="Sdcb.Arithmetic.Mpfr" Version="4.2.0" />
+   <PackageReference Include="Sdcb.Arithmetic.Mpfr.runtime.win64" Version="4.2.0.2" />
+ </ItemGroup>
+
 </Project>

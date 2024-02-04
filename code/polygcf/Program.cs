@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using Sdcb.Arithmetic.Mpfr;
 
 namespace PlutoScarab
 {
@@ -257,8 +258,46 @@ namespace PlutoScarab
             }
 
             lookups["0.3183662467283164716819087"] = "\\frac {I_{\\frac 3 4}(\\frac 1 2)} {I_{\\frac {-1} 4}(\\frac 1 2)}";
-            lookups["0.3882107655677957875116585"] = "\\frac {J_0(2)} {J_1(2)}";
-            lookups["2.5759203213682219568574967"] = "\\frac {J_1(2)} {J_0(2)}";
+            MpfrFloat.DefaultPrecision = 256;
+
+            string StrIndex(MpfrFloat f)
+            {
+                var s = MpfrFloat.Abs(f, null).ToString();
+                return s[..(s.IndexOf('.') + 26)];
+            }
+
+            for (var n = 1; n < 20; n++)
+            {
+                for (var d = 1; d < 20; d++)
+                {
+                    var g = GCD(n, d);
+
+                    if (g == 1)
+                    {
+                        var x = (MpfrFloat)n / (MpfrFloat)d;
+                        MpfrFloat y;
+                        string s;
+
+                        for (var k = 0; k < 10; k++)
+                        {
+                            y = MpfrFloat.JN(k + 1, x) / MpfrFloat.JN(k, x);
+                            s = StrIndex(y);
+
+                            if (d == 1)
+                                lookups[s] = $"\\frac {{J_{k + 1}({n})}} {{J_{k}({n})}}";
+                            else
+                                lookups[s] = $"\\frac {{J_{k + 1}(\\frac {n} {d})}} {{J_{k}(\\frac {n} {d})}}";
+                                
+                            s = StrIndex(1 / y);
+
+                            if (d == 1)
+                                lookups[s] = $"\\frac {{J_{k}({n})}} {{J_{k + 1}({n})}}";
+                            else
+                                lookups[s] = $"\\frac {{J_{k}(\\frac {n} {d})}} {{J_{k + 1}(\\frac {n} {d})}}";
+                        }
+                    }
+                }
+            }
 
             var pairs =
                 from score in Enumerable.Range(2, maxScore - 1)
