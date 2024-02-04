@@ -275,7 +275,7 @@ namespace PlutoScarab
 
                 int pterms = 0, qterms = 0;
                 var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
-                var qs = CF.Nats().Select(n => { qterms++; return Poly.Eval(q, n); });
+                var qs = CF.Nats().Skip(1).Select(n => { qterms++; return Poly.Eval(q, n); });
                 var cf = CF.Simplify(ps, qs);
                 List<BigInteger> capture = null;
 
@@ -341,20 +341,20 @@ namespace PlutoScarab
                 file.WriteLine("Polynomial score is equal to its degree plus the sum of absolute values of its coefficients.");
                 file.WriteLine();
                 file.WriteLine("$$");
-                file.WriteLine("x = f(0) + \\cfrac {g(0)} {f(1) + \\cfrac {g(1)} {f(2) + \\ddots}}");
+                file.WriteLine("x = b_0 + \\cfrac {a_1} {b_1 + \\cfrac {a_2} {b_2 + \\ddots}}");
                 file.WriteLine("$$");
                 file.WriteLine();
                 file.WriteLine("The 'Terms' column is the number of continued fraction terms needed to calculate");
                 file.WriteLine("the value to the precision shown.");
                 file.WriteLine();
-                file.WriteLine("|Value of $$x$$|f(n)|g(n)|Simple CF|Terms|");
+                file.WriteLine("|Value of $$x$$|a<sub>n</sub>|b<sub>n</sub>|Simple CF|Terms|");
                 file.WriteLine("|--------------|----|----|---------|-----|");
 
                 foreach (var pair in list)
                 {
                     var value = pair.Key;
                     var (p, q, scf, tu) = pair.Value;
-                    file.WriteLine($"|{value}|{Poly.ToFactoredString(p)}|{Poly.ToFactoredString(q)}|{scf}|{tu}|");
+                    file.WriteLine($"|{value}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{scf}|{tu}|");
                 }
             }
         }

@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "fbuild",
-            "program": "${workspaceFolder}/tests/fsharp/bin/Debug/net5.0/tests.dll",
+            "program": "${workspaceFolder}/tests/fsharp/bin/Debug/net8.0/tests.dll",
             "args": [],
             "cwd": "${workspaceFolder}/tests/fsharp",
             "console": "internalConsole",
@@ -17,9 +17,20 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "cbuild",
-            "program": "${workspaceFolder}/tests/blog/bin/Debug/net5.0/tests.dll",
+            "program": "${workspaceFolder}/tests/blog/bin/Debug/net8.0/tests.dll",
             "args": [],
             "cwd": "${workspaceFolder}/tests/blog",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "polygcf",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "polygcfbuild",
+            "program": "${workspaceFolder}/code/polygcf/bin/Debug/net8.0/polygcf.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/code/polygcf",
             "console": "internalConsole",
             "stopAtEntry": false
         }
