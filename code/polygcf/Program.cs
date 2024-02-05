@@ -174,7 +174,7 @@ namespace PlutoScarab
                 where Math.Sqrt(q) != (int)Math.Sqrt(q)
                 from a in Enumerable.Range(-9, 19)
                 from b in Enumerable.Range(-9, 19)
-                where a > 0 || b > 0
+                where (a > 0 || b > 0) && b != 5
                 from c in Enumerable.Range(1, 2)
                 where b != 0 
                 let g = GCD(GCD(a, b), c)
