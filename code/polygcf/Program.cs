@@ -307,7 +307,7 @@ namespace PlutoScarab
 
             for (var n = 1; n < 20; n++)
             {
-                for (var d = 1; d < 20; d++)
+                for (var d = 1; d < 19; d++)
                 {
                     var g = GCD(n, d);
 
@@ -360,6 +360,18 @@ namespace PlutoScarab
                             lookups[s] = $"\\frac {{I_{{{n}}}(1)}} {{I_{{{n - d}}}(1)}}";
                         else
                             lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(1)}} {{I_{{\\frac {n - d} {d}}}(1)}}";
+
+                        y = BesselI(x, (MpfrFloat)2 / d) / BesselI(x - 1, (MpfrFloat)2 / d);
+                        s = StrIndex(y);
+
+                        if (d == 1)
+                            lookups[s] = $"\\frac {{I_{{{n}}}(2)}} {{I_{{{n - d}}}(2)}}";
+                        else if (d == 2)
+                            lookups[s] = $"\\frac {{I_{{\\frac {n} 2}}(1)}} {{I_{{\\frac {n - d} 2}}(1)}}";
+                        else if ((d & 1) == 0)
+                            lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(\\frac 1 {d / 2})}} {{I_{{\\frac {n - d} {d}}}(\\frac 1 {d / 2})}}";
+                        else
+                            lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(\\frac 2 {d})}} {{I_{{\\frac {n - d} {d}}}(\\frac 2 {d})}}";
                     }
                 }
             }
