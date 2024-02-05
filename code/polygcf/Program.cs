@@ -366,15 +366,15 @@ namespace PlutoScarab
 
                 var termsUsed = Math.Max(pterms, qterms);
                 cf = CF.Normalize(capture);
-                var scf = "[" + first + "; " + string.Join(", ", cf.Skip(1).Take(5)) + ", ...]";
+                var scf = ""; //"[" + first + "; " + string.Join(", ", cf.Skip(1).Take(5)) + ", ...]";
 
                 if (lookups.TryGetValue(s, out var expr))
                 {
-                    scf += " = $$" + expr + "$$";
+                    scf = "$$" + expr + "$$";
                 }
                 else if (maybes.TryGetValue(s.Substring(0, 15), out expr))
                 {
-                    scf += " = $$" + expr + "$$";
+                    scf = "$$" + expr + "$$";
                 }
 
                 if (!results.TryGetValue(s, out var result) || result.Item4 > termsUsed)
@@ -407,7 +407,7 @@ namespace PlutoScarab
                 file.WriteLine("The 'Terms' column is the number of continued fraction terms needed to calculate");
                 file.WriteLine("the value to the precision shown.");
                 file.WriteLine();
-                file.WriteLine("|Value of $$x$$|a<sub>n</sub>|b<sub>n</sub>|Simple CF|Terms|");
+                file.WriteLine("|Value of $$x$$|a<sub>n</sub>|b<sub>n</sub>|Expression|Terms|");
                 file.WriteLine("|--------------|----|----|---------|-----|");
 
                 foreach (var pair in list)
