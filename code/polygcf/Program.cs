@@ -330,8 +330,8 @@ namespace PlutoScarab
 
             foreach (var (p, q) in pairs)
             {
-                if (q.Length == 1 && q[0] == 1)
-                    continue; // simple continued fraction
+                //if (q.Length == 1 && q[0] == 1)
+                //    continue; // simple continued fraction
 
                 int pterms = 0, qterms = 0;
                 var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
