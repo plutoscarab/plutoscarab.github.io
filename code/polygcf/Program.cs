@@ -440,7 +440,28 @@ namespace PlutoScarab
                 {
                     var value = pair.Key;
                     var (p, q, scf, tu) = pair.Value;
-                    file.WriteLine($"|{value}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{scf}|{tu}|");
+
+                    if (scf.Length > 0)
+                    {
+                        file.WriteLine($"|{value}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{scf}|{tu}|");
+                    }
+                }
+
+                file.WriteLine();
+                file.WriteLine("Entries with unknown closed-form expression:");
+                file.WriteLine();
+                file.WriteLine("|Digits of $$x$$|a<sub>n</sub>|b<sub>n</sub>|Terms|");
+                file.WriteLine("|--------------|----|----|-----|");
+
+                foreach (var pair in list)
+                {
+                    var value = pair.Key;
+                    var (p, q, scf, tu) = pair.Value;
+
+                    if (scf.Length == 0)
+                    {
+                        file.WriteLine($"|{value}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{tu}|");
+                    }
                 }
             }
         }
