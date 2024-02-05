@@ -27,49 +27,6 @@ namespace PlutoScarab
             const int maxScore = 11;
 
             var results = new Dictionary<string, (int[], int[], string, int)>();
-
-            // mixed surds
-            var surds =
-                from y in Enumerable.Range(2, maxScore - 2)
-                from twox in Enumerable.Range(1, (maxScore - y) / 2)
-                select (twox, y);
-
-            foreach (var (twox, y) in surds)
-            {
-                var p = new[] { twox };
-                var q = new[] { y };
-                int pterms = 0, qterms = 0;
-                var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
-                var qs = CF.Nats().Select(n => { qterms++; return Poly.Eval(q, n); });
-                var cf = CF.Simplify(ps, qs);
-                var s = CF.Digits(cf, 25);
-                var termsUsed = Math.Max(pterms, qterms);
-
-                if (s.EndsWith(CF.InvalidDigit))
-                    continue;
-
-                var scf = "[" + cf.First() + "; " + string.Join(", ", cf.Skip(1).Take(5)) + ", ...]";
-                var d = twox * twox + 4 * y;
-
-                if ((d % 4) != 0)
-                {
-                    scf += " = $$\\frac{" + twox + "+\\sqrt{" + d + "}}2$$";
-                }
-                else if ((twox % 2) != 0)
-                {
-                    scf += " = $$\\frac{" + twox + "+2\\sqrt{" + (d / 4) + "}}2$$";
-                }
-                else
-                {
-                    scf += " = $$" + (twox / 2) + "+\\sqrt{" + (d / 4) + "}$$";
-                }
-
-                if (!results.ContainsKey(s))
-                {
-                    results[s] = (p, q, scf, termsUsed);
-                }
-            }
-
             var lookups = new Dictionary<string, string>();
 
             // e
@@ -171,6 +128,48 @@ namespace PlutoScarab
             }
 
             var maybes = new Dictionary<string, string>();
+            MpfrFloat.DefaultPrecision = 256;
+
+            string StrIndex(MpfrFloat f)
+            {
+                var s = MpfrFloat.Abs(f, null).ToString() + "0000000000000000000000000";
+                return s[..(s.IndexOf('.') + 26)];
+            }
+
+            // mixed surds
+            var surds =
+                from q in new[] { 2, 3, 5, 6, 7, 10, 11, 13, 14, 15, 17, 19, 21, 22, 23, 26, 29, 30, 31, 33, 34, 35, 37, 38, 39 }
+                where Math.Sqrt(q) != (int)Math.Sqrt(q)
+                from a in Enumerable.Range(-9, 19)
+                from b in Enumerable.Range(-9, 19)
+                where a > 0 || b > 0
+                from c in Enumerable.Range(1, 2)
+                where b != 0 
+                let g = GCD(GCD(a, b), c)
+                where g == 1
+                select (q, a, b, c);
+            
+            foreach (var (q, a, b, c) in surds)
+            {
+                var sq = MpfrFloat.Sqrt(q);
+                var y = (a + b * sq) / c;
+
+                if (y != (int)y)
+                {
+                    var s = StrIndex(y);
+                    var lk = "";
+                    if (a != 0) lk = a.ToString();
+                    if (a != 0 && b > 0) lk += "+";
+                    if (b != 1) lk += b.ToString();
+                    lk += "\\sqrt{" + q + "}";
+                    if (c != 1) lk = "\\frac{" + lk + "}" + c;
+
+                    if (!lookups.ContainsKey(s) || lookups[s].Length > lk.Length)
+                    {
+                        lookups[s] = lk;
+                    }
+                }
+            }
 
             foreach (var (p, q) in Seq.Rationals().TakeWhile(_ => _.Item2 < 100))
             {
@@ -255,15 +254,6 @@ namespace PlutoScarab
                 {
                     Add("cosh^{-1}", Math.Acosh);
                 }
-            }
-
-            lookups["0.3183662467283164716819087"] = "\\frac {I_{\\frac 3 4}(\\frac 1 2)} {I_{\\frac {-1} 4}(\\frac 1 2)}";
-            MpfrFloat.DefaultPrecision = 256;
-
-            string StrIndex(MpfrFloat f)
-            {
-                var s = MpfrFloat.Abs(f, null).ToString();
-                return s[..(s.IndexOf('.') + 26)];
             }
 
             MpfrFloat BesselI(MpfrFloat a, MpfrFloat x)
