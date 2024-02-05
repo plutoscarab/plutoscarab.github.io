@@ -77,7 +77,7 @@ namespace PlutoScarab
             foreach (var (a, b, c, d) in es)
             {
                 var cf = CF.Transform(e, a, b, c, d);
-                var s = CF.Digits(cf, Sigdig.Count).Replace("-", "").Replace(".", "");
+                var s = CF.Digits(cf, Sigdig.Count);
 
                 if (s.EndsWith(CF.InvalidDigit))
                     continue;
@@ -108,7 +108,7 @@ namespace PlutoScarab
             foreach (var (a, b, c, d) in es)
             {
                 var cf = CF.Transform(sqrtE, a, b, c, d);
-                var s = CF.Digits(cf, Sigdig.Count).Replace("-", "").Replace(".", "");
+                var s = CF.Digits(cf, Sigdig.Count);
 
                 if (s.EndsWith(CF.InvalidDigit))
                     continue;
@@ -144,7 +144,7 @@ namespace PlutoScarab
             foreach (var (a, b, c, d) in pis)
             {
                 var cf = CF.Transform(pi, a, b, c, d);
-                var s = CF.Digits(cf, Sigdig.Count).Replace(".", "").Replace("-", "");
+                var s = CF.Digits(cf, Sigdig.Count);
 
                 if (s.EndsWith(CF.InvalidDigit))
                     continue;
@@ -333,6 +333,20 @@ namespace PlutoScarab
                                 lookups[s] = $"\\frac {{J_{k}({n})}} {{J_{k + 1}({n})}}";
                             else
                                 lookups[s] = $"\\frac {{J_{k}(\\frac {n} {d})}} {{J_{k + 1}(\\frac {n} {d})}}";
+
+                            y = x * MpfrFloat.JN(k + 1, x) / MpfrFloat.JN(k, x);
+                            s = StrIndex(y);
+
+                            if (d == 1)
+                                if (n == 1)
+                                    lookups[s] = $"\\frac {{J_{k + 1}({n})}} {{J_{k}({n})}}";
+                                else
+                                    lookups[s] = $"\\frac {{{n} J_{k + 1}({n})}} {{J_{k}({n})}}";
+                            else
+                                if (n == 1)
+                                    lookups[s] = $"\\frac {{J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}";
+                                else
+                                    lookups[s] = $"\\frac {{{n} J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}";
                         }
 
                         y = BesselI(x, .5) / BesselI(x - 1, .5);
@@ -349,6 +363,8 @@ namespace PlutoScarab
                     }
                 }
             }
+
+            lookups[new("15251352761609812090")] = "\\sqrt{\\frac 2 {e\\pi}} \\frac 1 {erfc(\\frac 1 {\\sqrt 2})}";
 
             var pairs =
                 from score in Enumerable.Range(2, maxScore - 1)
@@ -389,7 +405,7 @@ namespace PlutoScarab
                     continue;
 
                 pterms = qterms = 0;
-                var s = CF.Digits(Captured(cf), Sigdig.Count).Replace("-", "").Replace(".", "");
+                var s = CF.Digits(Captured(cf), Sigdig.Count);
 
                 if (s.EndsWith(CF.InvalidDigit))
                     continue;
