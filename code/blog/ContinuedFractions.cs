@@ -91,6 +91,13 @@ namespace PlutoScarab
 
                 // Write the integer portion.
                 writer.Write(first);
+                var nonZeroDigit = false;
+
+                if (first != 0)
+                {
+                    places -= first.ToString().Length;
+                    nonZeroDigit = true;
+                }
 
                 // We're done if there is no fractional part.
                 if (!te.MoveNext())
@@ -140,7 +147,13 @@ namespace PlutoScarab
 
                         // Write the digit. 
                         writer.Write((int)n);
-                        places--;
+                        nonZeroDigit |= n != 0;
+                        
+                        if (nonZeroDigit)
+                        {
+                            places--;
+                        }
+                        
                         loops = 0;
 
                         // Take the remainder and multiply by 10 again to set up for next digit.

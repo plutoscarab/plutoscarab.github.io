@@ -8,6 +8,35 @@ using Sdcb.Arithmetic.Mpfr;
 
 namespace PlutoScarab
 {
+    class Sigdig : IEquatable<Sigdig>, IComparable<Sigdig>
+    {
+        public const int Count = 20;
+
+        private string s;
+
+        public Sigdig(string s)
+        {
+            if (s[0] == '-') s = s[1..];
+            s = s.Replace(".", "");
+            if (!s.All(char.IsDigit)) throw new ArgumentException(nameof(s));
+            var i = 0;
+            while (s[i] == '0') i++;
+            s = s[i..];
+            if (s.Length < Count) throw new ArgumentException(nameof(s));
+            this.s = s[..Count];
+        }
+
+        public override string ToString() => s;
+
+        public override int GetHashCode() => s.GetHashCode();
+
+        public bool Equals(Sigdig other) => s.Equals(other.s);
+
+        public override bool Equals(object other) => other is Sigdig sd && s.Equals(sd);
+
+        public int CompareTo(Sigdig other) => s.CompareTo(other.s);
+    }
+
     class Program
     {
         static int GCD(int m, int n)
@@ -26,8 +55,8 @@ namespace PlutoScarab
         {
             const int maxScore = 11;
 
-            var results = new Dictionary<string, (int[], int[], string, int)>();
-            var lookups = new Dictionary<string, string>();
+            var results = new Dictionary<Sigdig, (int[], int[], string, int)>();
+            var lookups = new Dictionary<Sigdig, string>();
 
             // e
             var e = new BigInteger[] { 2 }.Concat(CF.Nats(1).SelectMany(n => new[] { 1, 2 * n, 1 }));
@@ -48,7 +77,7 @@ namespace PlutoScarab
             foreach (var (a, b, c, d) in es)
             {
                 var cf = CF.Transform(e, a, b, c, d);
-                var s = CF.Digits(cf, 25);
+                var s = CF.Digits(cf, Sigdig.Count).Replace("-", "").Replace(".", "");
 
                 if (s.EndsWith(CF.InvalidDigit))
                     continue;
@@ -56,10 +85,11 @@ namespace PlutoScarab
                 var num = Poly.ToFactoredString(new[] { a, b }, "e");
                 var den = Poly.ToFactoredString(new[] { c, d }, "e");
                 var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
+                Sigdig sd = new(s);
 
-                if (!lookups.ContainsKey(s))
+                if (!lookups.ContainsKey(sd))
                 {
-                    lookups[s] = expr;
+                    lookups[sd] = expr;
                 }
             }
 
@@ -78,17 +108,19 @@ namespace PlutoScarab
             foreach (var (a, b, c, d) in es)
             {
                 var cf = CF.Transform(sqrtE, a, b, c, d);
-                var s = CF.Digits(cf, 25);
+                var s = CF.Digits(cf, Sigdig.Count).Replace("-", "").Replace(".", "");
 
                 if (s.EndsWith(CF.InvalidDigit))
                     continue;
 
-                if (!lookups.ContainsKey(s))
+                Sigdig sd = new(s);
+
+                if (!lookups.ContainsKey(sd))
                 {
                     var num = Poly.ToFactoredString(new[] { a, b }, "\\sqrt e");
                     var den = Poly.ToFactoredString(new[] { c, d }, "\\sqrt e");
                     var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
-                    lookups[s] = expr;
+                    lookups[sd] = expr;
                 }
             }
 
@@ -112,7 +144,7 @@ namespace PlutoScarab
             foreach (var (a, b, c, d) in pis)
             {
                 var cf = CF.Transform(pi, a, b, c, d);
-                var s = CF.Digits(cf, 25);
+                var s = CF.Digits(cf, Sigdig.Count).Replace(".", "").Replace("-", "");
 
                 if (s.EndsWith(CF.InvalidDigit))
                     continue;
@@ -120,20 +152,20 @@ namespace PlutoScarab
                 var num = Poly.ToFactoredString(new[] { a, b }, "\\pi");
                 var den = Poly.ToFactoredString(new[] { c, d }, "\\pi");
                 var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
+                Sigdig sd = new(s);
 
-                if (!lookups.ContainsKey(s))
+                if (!lookups.ContainsKey(sd))
                 {
-                    lookups[s] = expr;
+                    lookups[sd] = expr;
                 }
             }
 
-            var maybes = new Dictionary<string, string>();
             MpfrFloat.DefaultPrecision = 256;
 
-            string StrIndex(MpfrFloat f)
+            Sigdig StrIndex(MpfrFloat f)
             {
-                var s = MpfrFloat.Abs(f, null).ToString() + "0000000000000000000000000";
-                return s[..(s.IndexOf('.') + 26)];
+                var s = MpfrFloat.Abs(f, null).ToString();
+                return new(s);
             }
 
             // mixed surds
@@ -173,86 +205,84 @@ namespace PlutoScarab
 
             foreach (var (p, q) in Seq.Rationals().TakeWhile(_ => _.Item2 < 100))
             {
-                var x = (Math.PI * p) / q;
+                var x = (MpfrFloat.ConstPi() * p) / q;
                 var num = Poly.ToFactoredString(new[] { 0, p }, "\\pi");
                 var frac = q == 1 ? num : "\\frac{" + num + "}{" + q + "}";
 
-                void Add(string trig, Func<double, double> func)
+                void Add(string trig, Func<MpfrFloat, int?, MpfrRounding?, MpfrFloat> func)
                 {
-                    try
+                    //try
                     {
-                        var y = ((decimal)func(x)).ToString();
-                        y = y.Substring(0, y.Length - 1);
+                        var y = func(x, null, null);
+                        var s = y.ToString();
 
-                        if (y.Length >= 15)
+                        if (s.Length >= Sigdig.Count)
                         {
-                            y = y.Substring(0, 15);
+                            Sigdig sd = new(s);
 
-                            if (!maybes.ContainsKey(y))
-                            {
-                                maybes[y] = trig + "(" + frac + ")";
-                            }
+                            if (!lookups.ContainsKey(sd))
+                                lookups[sd] = trig + "(" + frac + ")";
                         }
                     }
-                    catch
+                    //catch
                     {
-                        Debugger.Break();
+                        //Debugger.Break();
                     }
                 }
 
-                Add("tan", Math.Tan);
-                Add("sin", Math.Sin);
-                Add("cos", Math.Cos);
-                Add("cot", x => 1 / Math.Tan(x));
-                Add("csc", x => 1 / Math.Sin(x));
-                Add("sec", x => 1 / Math.Cos(x));
-                Add("exp", Math.Exp);
-                Add("ln", Math.Log);
-                Add("sqrt", Math.Sqrt);
-                Add("tanh", Math.Tanh);
-                Add("sinh", Math.Sinh);
-                Add("cosh", Math.Cosh);
-                Add("tan^{-1}", Math.Atan);
-                Add("sinh^{-1}", Math.Asinh);
+                Add("tan", MpfrFloat.Tan);
+                Add("sin", MpfrFloat.Sin);
+                Add("cos", MpfrFloat.Cos);
+                Add("cot", (x, _, _) => 1 / MpfrFloat.Tan(x));
+                Add("csc", (x, _, _) => 1 / MpfrFloat.Sin(x));
+                Add("sec", (x, _, _) => 1 / MpfrFloat.Cos(x));
+                Add("exp", MpfrFloat.Exp);
+                Add("ln", MpfrFloat.Log);
+                Add("sqrt", MpfrFloat.Sqrt);
+                Add("tanh", MpfrFloat.Tanh);
+                Add("sinh", MpfrFloat.Sinh);
+                Add("cosh", MpfrFloat.Cosh);
+                Add("tan^{-1}", MpfrFloat.Atan);
+                Add("sinh^{-1}", MpfrFloat.Asinh);
 
                 if (x < 1) 
                 {
-                    Add("tanh^{-1}", Math.Atanh);
-                    Add("cos^{-1}", Math.Acos);
-                    Add("sin^{-1}", Math.Asin);
+                    Add("tanh^{-1}", MpfrFloat.Atanh);
+                    Add("cos^{-1}", MpfrFloat.Acos);
+                    Add("sin^{-1}", MpfrFloat.Asin);
                 }
                 else if (x > 1)
                 {
-                    Add("cosh^{-1}", Math.Acosh);
+                    Add("cosh^{-1}", MpfrFloat.Acosh);
                 }
 
-                x = p / (double)q;
+                x = p / (MpfrFloat)q;
                 frac = q == 1 ? p.ToString() : "\\frac{" + p + "}{" + q + "}";
 
-                Add("tan", Math.Tan);
-                Add("sin", Math.Sin);
-                Add("cos", Math.Cos);
-                Add("cot", x => 1 / Math.Tan(x));
-                Add("csc", x => 1 / Math.Sin(x));
-                Add("sec", x => 1 / Math.Cos(x));
-                Add("exp", Math.Exp);
-                Add("ln", Math.Log);
-                Add("sqrt", Math.Sqrt);
-                Add("tanh", Math.Tanh);
-                Add("sinh", Math.Sinh);
-                Add("cosh", Math.Cosh);
-                Add("tan^{-1}", Math.Atan);
-                Add("sinh^{-1}", Math.Asinh);
+                Add("tan", MpfrFloat.Tan);
+                Add("sin", MpfrFloat.Sin);
+                Add("cos", MpfrFloat.Cos);
+                Add("cot", (x, _, _) => 1 / MpfrFloat.Tan(x));
+                Add("csc", (x, _, _) => 1 / MpfrFloat.Sin(x));
+                Add("sec", (x, _, _) => 1 / MpfrFloat.Cos(x));
+                Add("exp", MpfrFloat.Exp);
+                Add("ln", MpfrFloat.Log);
+                Add("sqrt", MpfrFloat.Sqrt);
+                Add("tanh", MpfrFloat.Tanh);
+                Add("sinh", MpfrFloat.Sinh);
+                Add("cosh", MpfrFloat.Cosh);
+                Add("tan^{-1}", MpfrFloat.Atan);
+                Add("sinh^{-1}", MpfrFloat.Asinh);
 
                 if (x < 1) 
                 {
-                    Add("tanh^{-1}", Math.Atanh);
-                    Add("cos^{-1}", Math.Acos);
-                    Add("sin^{-1}", Math.Asin);
+                    Add("tanh^{-1}", MpfrFloat.Atanh);
+                    Add("cos^{-1}", MpfrFloat.Acos);
+                    Add("sin^{-1}", MpfrFloat.Asin);
                 }
                 else if (x > 1)
                 {
-                    Add("cosh^{-1}", Math.Acosh);
+                    Add("cosh^{-1}", MpfrFloat.Acosh);
                 }
             }
 
@@ -285,7 +315,7 @@ namespace PlutoScarab
                     {
                         var x = (MpfrFloat)n / (MpfrFloat)d;
                         MpfrFloat y;
-                        string s;
+                        Sigdig s;
 
                         for (var k = 0; k < 10; k++)
                         {
@@ -359,34 +389,30 @@ namespace PlutoScarab
                     continue;
 
                 pterms = qterms = 0;
-                var s = CF.Digits(Captured(cf), 25);
+                var s = CF.Digits(Captured(cf), Sigdig.Count).Replace("-", "").Replace(".", "");
 
                 if (s.EndsWith(CF.InvalidDigit))
                     continue;
 
                 var termsUsed = Math.Max(pterms, qterms);
-                cf = CF.Normalize(capture);
-                var scf = ""; //"[" + first + "; " + string.Join(", ", cf.Skip(1).Take(5)) + ", ...]";
+                var scf = string.Empty;
+                Sigdig sd = new(s);
 
-                if (lookups.TryGetValue(s, out var expr))
-                {
-                    scf = "$$" + expr + "$$";
-                }
-                else if (maybes.TryGetValue(s.Substring(0, 15), out expr))
+                if (lookups.TryGetValue(sd, out var expr))
                 {
                     scf = "$$" + expr + "$$";
                 }
 
-                if (!results.TryGetValue(s, out var result) || result.Item4 > termsUsed)
+                if (!results.TryGetValue(sd, out var result) || result.Item4 > termsUsed)
                 {
-                    results[s] = (p, q, scf, termsUsed);
+                    results[sd] = (p, q, scf, termsUsed);
                     Console.WriteLine($"{s}\t{termsUsed}");
                 }
             }
 
             var list = results.ToList();
             results = null;
-            list.Sort((a, b) => decimal.Parse(a.Key).CompareTo(decimal.Parse(b.Key)));
+            list.Sort((a, b) => a.Key.CompareTo(b.Key));
 
             using (var file = File.CreateText("../../polygcf.md"))
             {
@@ -407,7 +433,7 @@ namespace PlutoScarab
                 file.WriteLine("The 'Terms' column is the number of continued fraction terms needed to calculate");
                 file.WriteLine("the value to the precision shown.");
                 file.WriteLine();
-                file.WriteLine("|Value of $$x$$|a<sub>n</sub>|b<sub>n</sub>|Expression|Terms|");
+                file.WriteLine("|Digits of $$x$$|a<sub>n</sub>|b<sub>n</sub>|Expression|Terms|");
                 file.WriteLine("|--------------|----|----|---------|-----|");
 
                 foreach (var pair in list)
