@@ -67,9 +67,11 @@ namespace PlutoScarab
                 from d in Enumerable.Range(-9, 19)
                 let q = c + d * Math.E
                 where q > 0
+                let gcd = GCD(c, d)
+                where gcd != 5 && gcd != -5
                 from a in Enumerable.Range(-9, 19)
                 from b in Enumerable.Range(-9, 19)
-                let g = GCD(GCD(a, b), GCD(c, d))
+                let g = GCD(GCD(a, b), gcd)
                 let v = (a + b * Math.E) / q
                 where g == 1 && v > 0 && v != 1
                 select (a / g, b / g, c / g, d / g);
@@ -351,7 +353,11 @@ namespace PlutoScarab
 
                         y = BesselI(x, .5) / BesselI(x - 1, .5);
                         s = StrIndex(y);
-                        lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(\\frac 1 2)}} {{I_{{\\frac {n - d} {d}}}(\\frac 1 2)}}";
+
+                        if (d == 1)
+                            lookups[s] = $"\\frac {{I_{{{n}}}(\\frac 1 2)}} {{I_{{{n - d}}}(\\frac 1 2)}}";
+                        else
+                            lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(\\frac 1 2)}} {{I_{{\\frac {n - d} {d}}}(\\frac 1 2)}}";
 
                         y = BesselI(x, 1) / BesselI(x - 1, 1);
                         s = StrIndex(y);
@@ -388,9 +394,6 @@ namespace PlutoScarab
 
             foreach (var (p, q) in pairs)
             {
-                //if (q.Length == 1 && q[0] == 1)
-                //    continue; // simple continued fraction
-
                 int pterms = 0, qterms = 0;
                 var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
                 var qs = CF.Nats().Skip(1).Select(n => { qterms++; return Poly.Eval(q, n); });
@@ -447,6 +450,10 @@ namespace PlutoScarab
                         : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
                     scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
                 }
+                else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
+                {
+                    scf = "$$\\frac1{1-J_0(2)}-1$$";
+                }
 
                 if (!results.TryGetValue(sd, out var result) || result.Item4 > termsUsed)
                 {
@@ -467,7 +474,7 @@ namespace PlutoScarab
                 file.WriteLine("---");
                 file.WriteLine();
                 file.WriteLine("Intended to be found by search engines when a value is known but the generalized continued fraction is unknown.");
-                file.WriteLine($"These are the first converging {list.Count:N0} values with polynomials of lowest total score.");
+                file.WriteLine($"These are the first {list.Count:N0} converging values with polynomials of lowest total score.");
                 file.WriteLine("Polynomial score is equal to its degree plus the sum of absolute values of its coefficients.");
                 file.WriteLine();
                 file.WriteLine("$$");

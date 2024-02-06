@@ -199,7 +199,7 @@ namespace PlutoScarab
 
         public static IEnumerable<BigInteger> Simplify(
             IEnumerable<BigInteger> ts,
-            IEnumerable<BigInteger> us) => Simplify(ts, us, 200, TimeoutBehavior.Signal);
+            IEnumerable<BigInteger> us) => Simplify(ts, us, 400, TimeoutBehavior.Signal);
 
         public static IEnumerable<BigInteger> Simplify(
             IEnumerable<BigInteger> ts,
