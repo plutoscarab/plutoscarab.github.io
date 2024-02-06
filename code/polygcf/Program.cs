@@ -57,112 +57,48 @@ namespace PlutoScarab
 
             var results = new Dictionary<Sigdig, (int[], int[], string, int)>();
             var lookups = new Dictionary<Sigdig, string>();
-
-            // e
-            var e = new BigInteger[] { 2 }.Concat(CF.Nats(1).SelectMany(n => new[] { 1, 2 * n, 1 }));
-            var sqrtE = CF.Nats().SelectMany(n => new[] { 1, 1 + 4 * n, 1 });
-
-            var es =
-                from c in Enumerable.Range(-9, 19)
-                from d in Enumerable.Range(-9, 19)
-                let q = c + d * Math.E
-                where q > 0
-                let gcd = GCD(c, d)
-                where gcd != 5 && gcd != -5
-                from a in Enumerable.Range(-9, 19)
-                from b in Enumerable.Range(-9, 19)
-                let g = GCD(GCD(a, b), gcd)
-                let v = (a + b * Math.E) / q
-                where g == 1 && v > 0 && v != 1
-                select (a / g, b / g, c / g, d / g);
-
-            foreach (var (a, b, c, d) in es)
-            {
-                var cf = CF.Transform(e, a, b, c, d);
-                var s = CF.Digits(cf, Sigdig.Count);
-
-                if (s.EndsWith(CF.InvalidDigit))
-                    continue;
-
-                var num = Poly.ToFactoredString(new[] { a, b }, "e");
-                var den = Poly.ToFactoredString(new[] { c, d }, "e");
-                var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
-                Sigdig sd = new(s);
-
-                if (!lookups.ContainsKey(sd))
-                {
-                    lookups[sd] = expr;
-                }
-            }
-
-            es =
-                from c in Enumerable.Range(-9, 19)
-                from d in Enumerable.Range(-9, 19)
-                let q = c + d * Math.Sqrt(Math.E)
-                where q > 0
-                from a in Enumerable.Range(-9, 19)
-                from b in Enumerable.Range(-9, 19)
-                let g = GCD(GCD(a, b), GCD(c, d))
-                let v = (a + b * Math.Sqrt(Math.E)) / q
-                where g == 1 && v > 0 && v != 1
-                select (a / g, b / g, c / g, d / g);
-
-            foreach (var (a, b, c, d) in es)
-            {
-                var cf = CF.Transform(sqrtE, a, b, c, d);
-                var s = CF.Digits(cf, Sigdig.Count);
-
-                if (s.EndsWith(CF.InvalidDigit))
-                    continue;
-
-                Sigdig sd = new(s);
-
-                if (!lookups.ContainsKey(sd))
-                {
-                    var num = Poly.ToFactoredString(new[] { a, b }, "\\sqrt e");
-                    var den = Poly.ToFactoredString(new[] { c, d }, "\\sqrt e");
-                    var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
-                    lookups[sd] = expr;
-                }
-            }
-
-            // pi
-            var odds = CF.Nats().Select(n => 2 * n + 1);
-            var squares = CF.Nats().Select(n => (n + 1) * (n + 1));
-            var pi = CF.Transform(CF.Simplify(odds, squares), 4, 0, 0, 1);
-
-            var pis =
-                from c in Enumerable.Range(-9, 19)
-                from d in Enumerable.Range(-9, 19)
-                let q = c + d * Math.PI
-                where q > 0
-                from a in Enumerable.Range(-9, 19)
-                from b in Enumerable.Range(-9, 19)
-                let g = GCD(GCD(a, b), GCD(c, d))
-                let v = (a + b * Math.PI) / q
-                where g == 1 && v > 0 && v != 1
-                select (a / g, b / g, c / g, d / g);
-
-            foreach (var (a, b, c, d) in pis)
-            {
-                var cf = CF.Transform(pi, a, b, c, d);
-                var s = CF.Digits(cf, Sigdig.Count);
-
-                if (s.EndsWith(CF.InvalidDigit))
-                    continue;
-
-                var num = Poly.ToFactoredString(new[] { a, b }, "\\pi");
-                var den = Poly.ToFactoredString(new[] { c, d }, "\\pi");
-                var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
-                Sigdig sd = new(s);
-
-                if (!lookups.ContainsKey(sd))
-                {
-                    lookups[sd] = expr;
-                }
-            }
-
             MpfrFloat.DefaultPrecision = 256;
+
+            void MobiusOfConst(MpfrFloat x, string xs)
+            {
+                foreach (var (a, b, c, d) in 
+                    from c in Enumerable.Range(-9, 19)
+                    from d in Enumerable.Range(-9, 19)
+                    from a in Enumerable.Range(-9, 19)
+                    from b in Enumerable.Range(-9, 19)
+                    select (a, b, c, d))
+                {
+                    var q = c + d * x;
+                    if (q <= 0) continue;
+                    var g1 = GCD(c, d);
+                    if (g1 == 5 || g1 == -5) continue;
+                    var v = (a + b * x) / q;
+                    if (v <= 0 || v == 1) continue;
+                    var g2 = GCD(a, b);
+                    if (GCD(g1, g2) != 1) continue;
+                    if (v == g2 / (MpfrFloat)g1) continue;
+
+                    var num = Poly.ToFactoredString(new[] { a, b }, xs);
+                    var den = Poly.ToFactoredString(new[] { c, d }, xs);
+                    var expr = den == "1" ? num : "\\frac{" + num + "}{" + den + "}";
+                    var s = ((a + b * x) / (c + d * x)).ToString();
+                    Sigdig sd = new(s);
+
+                    if (!lookups.ContainsKey(sd))
+                    {
+                        lookups[sd] = expr;
+                    }
+                }
+            }
+
+            MobiusOfConst(MpfrFloat.Exp(1), "e");
+            MobiusOfConst(MpfrFloat.Exp(.5), "\\sqrt e");
+            MobiusOfConst(MpfrFloat.Exp(1 / (MpfrFloat)3), "\\sqrt[3]e");
+            MobiusOfConst(MpfrFloat.Exp(.25), "\\sqrt[4]e");
+            MobiusOfConst(MpfrFloat.ConstPi(), "\\pi");
+            MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstPi(), 2), "\\pi^2");
+            MobiusOfConst(MpfrFloat.ConstCatalan(), "G");
+            MobiusOfConst(MpfrFloat.Zeta(3), "\\zeta(3)");
 
             Sigdig StrIndex(MpfrFloat f)
             {
@@ -513,6 +449,83 @@ namespace PlutoScarab
                     {
                         file.WriteLine($"|{value}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{tu}|");
                     }
+                }
+            }
+
+            pairs =
+                from score in Enumerable.Range(maxScore + 1, short.MaxValue)
+                from score1 in Enumerable.Range(1, score - 1)
+                let score2 = score - score1
+                from p in Poly.WithScore(score1)
+                from q in Poly.WithScore(score2)
+                select (p, q);
+
+            foreach (var (p, q) in pairs)
+            {
+                int pterms = 0, qterms = 0;
+                var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
+                var qs = CF.Nats().Skip(1).Select(n => { qterms++; return Poly.Eval(q, n); });
+                var cf = CF.Simplify(ps, qs);
+                List<BigInteger> capture = null;
+
+                IEnumerable<BigInteger> Captured(IEnumerable<BigInteger> terms)
+                {
+                    capture = new List<BigInteger>();
+
+                    foreach (var term in terms)
+                    {
+                        capture.Add(term);
+                        yield return term;
+                    }
+                }
+
+                if (!cf.Any())
+                    continue;
+
+                var first = cf.First();
+
+                if (first.Sign < 0)
+                    continue;
+
+                pterms = qterms = 0;
+                var s = CF.Digits(Captured(cf), Sigdig.Count);
+
+                if (s.EndsWith(CF.InvalidDigit))
+                    continue;
+
+                var termsUsed = Math.Max(pterms, qterms);
+                var scf = string.Empty;
+                Sigdig sd = new(s);
+
+                if (lookups.TryGetValue(sd, out var expr))
+                {
+                    scf = "$$" + expr + "$$";
+                }
+                else if (q.Length == 2 && q[0] == 0 && q[1] == 2 && p.Length == 1)
+                {
+                    if (p[0] == 2)
+                        scf = $"$$\\frac 2 {{e\\sqrt\\pi\\operatorname{{erfc}}(1)}}$$";
+                    else if ((p[0] & 1) == 0)
+                        scf = $"$$\\frac 2 {{e^{{{p[0] / 2}}}\\sqrt\\pi\\operatorname{{erfc}}({p[0] / 2})}}$$";
+                    else
+                        scf = $"$$\\frac 2 {{\\sqrt\\pi e^\\frac {{{p[0]}}} 2 \\operatorname{{erfc}}(\\frac {{{p[0]}}} 2)}}$$";
+                }
+                else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
+                {
+                    var sq = Math.Sqrt(-q[0]);
+                    var z = sq * sq == -q[0] 
+                        ? sq.ToString()
+                        : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
+                    scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
+                }
+                else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
+                {
+                    scf = "$$\\frac1{1-J_0(2)}-1$$";
+                }
+
+                if (scf.Length > 0)
+                {
+                    Console.WriteLine($"{s}\t{Poly.ToFactoredString(q)}\t{Poly.ToFactoredString(p)}\t{scf}\t{termsUsed}");
                 }
             }
         }
