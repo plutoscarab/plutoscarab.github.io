@@ -376,7 +376,7 @@ namespace PlutoScarab
                 }
             }
 
-            lookups[new("15251352761609812090")] = "\\sqrt{\\frac 2 {e\\pi}} \\frac 1 {erfc(\\frac 1 {\\sqrt 2})}";
+            lookups[new("15251352761609812090")] = "\\sqrt{\\frac 2 {e\\pi}} \\frac 1 {\\operatorname{erfc}(\\frac 1 {\\sqrt 2})}";
 
             var pairs =
                 from score in Enumerable.Range(2, maxScore - 1)
@@ -430,6 +430,23 @@ namespace PlutoScarab
                 {
                     scf = "$$" + expr + "$$";
                 }
+                else if (q.Length == 2 && q[0] == 0 && q[1] == 2 && p.Length == 1)
+                {
+                    if (p[0] == 2)
+                        scf = $"$$\\frac 2 {{e\\sqrt\\pi\\operatorname{{erfc}}(1)}}$$";
+                    else if ((p[0] & 1) == 0)
+                        scf = $"$$\\frac 2 {{e^{{{p[0] / 2}}}\\sqrt\\pi\\operatorname{{erfc}}({p[0] / 2})}}$$";
+                    else
+                        scf = $"$$\\frac 2 {{\\sqrt\\pi e^\\frac {{{p[0]}}} 2 \\operatorname{{erfc}}(\\frac {{{p[0]}}} 2)}}$$";
+                }
+                else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
+                {
+                    var sq = Math.Sqrt(-q[0]);
+                    var z = sq * sq == -q[0] 
+                        ? sq.ToString()
+                        : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
+                    scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
+                }
 
                 if (!results.TryGetValue(sd, out var result) || result.Item4 > termsUsed)
                 {
@@ -449,9 +466,8 @@ namespace PlutoScarab
                 file.WriteLine("tag: math");
                 file.WriteLine("---");
                 file.WriteLine();
-                file.WriteLine("Intended to be found by search engines when a value or terms of a simple");
-                file.WriteLine("continued fraction are known but the generalized continued fraction is unknown.");
-                file.WriteLine($"These are the first {list.Count:N0} values with polynomials of lowest total score.");
+                file.WriteLine("Intended to be found by search engines when a value is known but the generalized continued fraction is unknown.");
+                file.WriteLine($"These are the first converging {list.Count:N0} values with polynomials of lowest total score.");
                 file.WriteLine("Polynomial score is equal to its degree plus the sum of absolute values of its coefficients.");
                 file.WriteLine();
                 file.WriteLine("$$");
