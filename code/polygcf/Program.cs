@@ -63,22 +63,22 @@ namespace PlutoScarab
             return "{" + s + "}";
         }
 
-        static string LaTaXfrac(string a, string b)
+        static string LaTeXfrac(string a, string b)
         {
             if (b == "1") return a;
             return "\\frac" + LaTeXwrap(a) + LaTeXwrap(b);
         }
 
-        static string LaTaXfrac(int a, int b)
+        static string LaTeXfrac(int a, int b)
         {
             var g = GCD(a, b);
             (a, b) = (a / g, b / g);
-            return LaTaXfrac(a.ToString(), b.ToString());
+            return LaTeXfrac(a.ToString(), b.ToString());
         }
 
         static string LaTeXpow(string expr, int a, int b)
         {
-            var f = LaTaXfrac(a, b);
+            var f = LaTeXfrac(a, b);
 
             if (f == "0")
                 return "1";
@@ -112,6 +112,14 @@ namespace PlutoScarab
             return (n, f);
         }
 
+        static string LaTeXsqrt(string n)
+        {
+            if (n == "1")
+                return "1";
+
+            return "\\sqrt" + LaTeXwrap(n);
+        }
+
         static string LaTeXsqrt(int n)
         {
             (n, var f) = SquareFree(n);
@@ -125,20 +133,35 @@ namespace PlutoScarab
             return "\\sqrt" + LaTeXwrap(n);
         }
 
+        static string LaTeXprod(string a, string b)
+        {
+            if (a == "1")
+                return b;
+
+            if (b == "1")
+                return a;
+
+            return a + " " + b;    
+        }
+
         static string LaTeXoverSqrt(int a, int b)
         {
-            (b, var c) = SquareFree(b); // b -> c * sqrt(b')
-
-            if (b == 1)
-                return LaTaXfrac(a, c);
+            // a / sqrt(b)
+            (b, var c) = SquareFree(b); // -> a / (c * sqrt(b))
+                
+            var d = GCD(a, b);  // (a/d)*sqrt(d) / (c * sqrt(b/d))
+            (a, b) = (a / d, b / d); // a sqrt(d) / (c sqrt(b))
 
             var g = GCD(a, c);
             (a, c) = (a / g, c / g);
 
-            if (c == 1)
-                return LaTaXfrac(a.ToString(), LaTeXsqrt(b));
+            if (d == 1)
+                return LaTeXfrac(a.ToString(), LaTeXprod(c.ToString(), LaTeXsqrt(b)));
 
-            return LaTaXfrac(a.ToString(), c + LaTeXsqrt(b));
+            if (b == 1)
+                return LaTeXfrac(LaTeXprod(a.ToString(), LaTeXsqrt(d)), c.ToString());
+
+            return LaTeXprod(LaTeXfrac(a, c), LaTeXsqrt(LaTeXfrac(d, b)));
         }
 
         static void Main(string[] args)
@@ -460,7 +483,7 @@ namespace PlutoScarab
                     var (a, b) = (P * P, 2 * Q);
 
                     // sqrt(2q) / (sqrt(pi) * e^(a / b) * erfc(p / sqrt(2q)))
-                    scf = "$$" + LaTaXfrac(LaTeXsqrt(2 * Q), "\\sqrt\\pi " + LaTeXpow("e", a, b) + "\\operatorname{erfc}(" + LaTeXoverSqrt(P, 2 * Q) + ")") + "$$";
+                    scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), "\\sqrt\\pi " + LaTeXpow("e", a, b) + "\\operatorname{erfc}(" + LaTeXoverSqrt(P, 2 * Q) + ")") + "$$";
                 }
                 else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
                 {
