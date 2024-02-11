@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using Sdcb.Arithmetic.Mpfr;
 
 namespace PlutoScarab
@@ -56,12 +58,12 @@ namespace PlutoScarab
             const int maxScore = 11;
 
             var results = new Dictionary<Sigdig, (int[], int[], string, int)>();
-            var lookups = new Dictionary<Sigdig, string>();
+            var lookups = new ConcurrentDictionary<Sigdig, string>();
             MpfrFloat.DefaultPrecision = 256;
 
             void MobiusOfConst(MpfrFloat x, string xs)
             {
-                foreach (var (a, b, c, d) in 
+                foreach (var (a, b, c, d) in
                     from c in Enumerable.Range(-9, 19)
                     from d in Enumerable.Range(-9, 19)
                     from a in Enumerable.Range(-9, 19)
@@ -84,10 +86,7 @@ namespace PlutoScarab
                     var s = ((a + b * x) / (c + d * x)).ToString();
                     Sigdig sd = new(s);
 
-                    if (!lookups.ContainsKey(sd))
-                    {
-                        lookups[sd] = expr;
-                    }
+                    lookups.TryAdd(sd, expr);
                 }
             }
 
@@ -97,6 +96,7 @@ namespace PlutoScarab
             MobiusOfConst(MpfrFloat.Exp(.25), "\\sqrt[4]e");
             MobiusOfConst(MpfrFloat.ConstPi(), "\\pi");
             MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstPi(), 2), "\\pi^2");
+            MobiusOfConst(MpfrFloat.Sqrt(MpfrFloat.ConstPi()), "\\sqrt\\pi");
             MobiusOfConst(MpfrFloat.ConstCatalan(), "G");
             MobiusOfConst(MpfrFloat.Zeta(3), "\\zeta(3)");
 
@@ -114,11 +114,11 @@ namespace PlutoScarab
                 from b in Enumerable.Range(-9, 19)
                 where (a > 0 || b > 0) && b != 5
                 from c in Enumerable.Range(1, 2)
-                where b != 0 
+                where b != 0
                 let g = GCD(GCD(a, b), c)
                 where g == 1
                 select (q, a, b, c);
-            
+
             foreach (var (q, a, b, c) in surds)
             {
                 var sq = MpfrFloat.Sqrt(q);
@@ -134,10 +134,7 @@ namespace PlutoScarab
                     lk += "\\sqrt{" + q + "}";
                     if (c != 1) lk = "\\frac{" + lk + "}" + c;
 
-                    if (!lookups.ContainsKey(s) || lookups[s].Length > lk.Length)
-                    {
-                        lookups[s] = lk;
-                    }
+                    lookups.AddOrUpdate(s, s => lk, (s, old) => old.Length > lk.Length ? lk : old);
                 }
             }
 
@@ -157,9 +154,8 @@ namespace PlutoScarab
                         if (s.Length >= Sigdig.Count)
                         {
                             Sigdig sd = new(s);
-
-                            if (!lookups.ContainsKey(sd))
-                                lookups[sd] = trig + "(" + frac + ")";
+                            
+                            lookups.TryAdd(sd, trig + "(" + frac + ")");
                         }
                     }
                     //catch
@@ -183,7 +179,7 @@ namespace PlutoScarab
                 Add("tan^{-1}", MpfrFloat.Atan);
                 Add("sinh^{-1}", MpfrFloat.Asinh);
 
-                if (x < 1) 
+                if (x < 1)
                 {
                     Add("tanh^{-1}", MpfrFloat.Atanh);
                     Add("cos^{-1}", MpfrFloat.Acos);
@@ -212,7 +208,7 @@ namespace PlutoScarab
                 Add("tan^{-1}", MpfrFloat.Atan);
                 Add("sinh^{-1}", MpfrFloat.Asinh);
 
-                if (x < 1) 
+                if (x < 1)
                 {
                     Add("tanh^{-1}", MpfrFloat.Atanh);
                     Add("cos^{-1}", MpfrFloat.Acos);
@@ -264,7 +260,7 @@ namespace PlutoScarab
                                 lookups[s] = $"\\frac {{J_{k + 1}({n})}} {{J_{k}({n})}}";
                             else
                                 lookups[s] = $"\\frac {{J_{k + 1}(\\frac {n} {d})}} {{J_{k}(\\frac {n} {d})}}";
-                                
+
                             s = StrIndex(1 / y);
 
                             if (d == 1)
@@ -282,9 +278,9 @@ namespace PlutoScarab
                                     lookups[s] = $"\\frac {{{n} J_{k + 1}({n})}} {{J_{k}({n})}}";
                             else
                                 if (n == 1)
-                                    lookups[s] = $"\\frac {{J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}";
-                                else
-                                    lookups[s] = $"\\frac {{{n} J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}";
+                                lookups[s] = $"\\frac {{J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}";
+                            else
+                                lookups[s] = $"\\frac {{{n} J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}";
                         }
 
                         y = BesselI(x, .5) / BesselI(x - 1, .5);
@@ -320,6 +316,7 @@ namespace PlutoScarab
 
             lookups[new("15251352761609812090")] = "\\sqrt{\\frac 2 {e\\pi}} \\frac 1 {\\operatorname{erfc}(\\frac 1 {\\sqrt 2})}";
 
+#if true
             var pairs =
                 from score in Enumerable.Range(2, maxScore - 1)
                 from score1 in Enumerable.Range(1, score - 1)
@@ -381,7 +378,7 @@ namespace PlutoScarab
                 else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
                 {
                     var sq = Math.Sqrt(-q[0]);
-                    var z = sq * sq == -q[0] 
+                    var z = sq * sq == -q[0]
                         ? sq.ToString()
                         : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
                     scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
@@ -389,6 +386,13 @@ namespace PlutoScarab
                 else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
                 {
                     scf = "$$\\frac1{1-J_0(2)}-1$$";
+                }
+                else if (q.Length == 2 && q[0] == 0 && q[1] == 1 && p.Length == 1)
+                {
+                    if ((p[0] & 1) == 0)
+                        scf = "$$\\frac{\\sqrt\\frac2\\pi}{e^{"+ p[0]*p[0]/4 +"}\\operatorname{erfc}(\\frac{" + p[0] + "}{\\sqrt2})}$$";
+                    else
+                        scf = "$$\\frac{\\sqrt\\frac2{\\pi e^{" + p[0]*p[0] + "}}}{\\operatorname{erfc}(\\frac{" + p[0] + "}{\\sqrt2})}$$";
                 }
 
                 if (!results.TryGetValue(sd, out var result) || result.Item4 > termsUsed)
@@ -451,82 +455,108 @@ namespace PlutoScarab
                     }
                 }
             }
+#endif
 
-            pairs =
-                from score in Enumerable.Range(maxScore + 1, short.MaxValue)
-                from score1 in Enumerable.Range(1, score - 1)
-                let score2 = score - score1
-                from p in Poly.WithScore(score1)
-                from q in Poly.WithScore(score2)
-                select (p, q);
-
-            foreach (var (p, q) in pairs)
+            foreach (var score in Enumerable.Range(15, short.MaxValue))
             {
-                int pterms = 0, qterms = 0;
-                var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
-                var qs = CF.Nats().Skip(1).Select(n => { qterms++; return Poly.Eval(q, n); });
-                var cf = CF.Simplify(ps, qs);
-                List<BigInteger> capture = null;
+                using var file = File.CreateText($"../../polygcf{score}.md");
+                file.AutoFlush = true;
+                file.WriteLine("|Digits of $$x$$|a<sub>n</sub>|b<sub>n</sub>|Expression|Terms|");
+                file.WriteLine("|--------------|----|----|---------|-----|");
 
-                IEnumerable<BigInteger> Captured(IEnumerable<BigInteger> terms)
+                var pq =
+                    from score1 in Enumerable.Range(1, score - 1)
+                    let score2 = score - score1
+                    from q in Poly.WithScore(score2)
+                    from p in Poly.WithScore(score1)
+                    select (p, q);
+
+                Parallel.ForEach(Partitioner.Create(pq).GetPartitions(Environment.ProcessorCount - 1), part =>
                 {
-                    capture = new List<BigInteger>();
-
-                    foreach (var term in terms)
+                    while (part.MoveNext())
                     {
-                        capture.Add(term);
-                        yield return term;
+                        (int[] p, int[] q) = part.Current;
+
+                        if (p.Length == 1 && q.Length == 1)
+                            continue;
+
+                        int pterms = 0, qterms = 0;
+                        var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
+                        var qs = CF.Nats().Skip(1).Select(n => { qterms++; return Poly.Eval(q, n); });
+                        var cf = CF.Simplify(ps, qs);
+                        List<BigInteger> capture = null;
+
+                        IEnumerable<BigInteger> Captured(IEnumerable<BigInteger> terms)
+                        {
+                            capture = new List<BigInteger>();
+
+                            foreach (var term in terms)
+                            {
+                                capture.Add(term);
+                                yield return term;
+                            }
+                        }
+
+                        if (!cf.Any())
+                            continue;
+
+                        var first = cf.First();
+
+                        if (first.Sign < 0)
+                            continue;
+
+                        pterms = qterms = 0;
+                        var s = CF.Digits(Captured(cf), Sigdig.Count);
+
+                        if (s.EndsWith(CF.InvalidDigit))
+                            continue;
+
+                        var termsUsed = Math.Max(pterms, qterms);
+                        var scf = string.Empty;
+                        Sigdig sd = new(s);
+
+                        if (lookups.TryGetValue(sd, out var expr))
+                        {
+                            scf = "$$" + expr + "$$";
+                        }
+                        else if (q.Length == 2 && q[0] == 0 && q[1] == 2 && p.Length == 1)
+                        {
+                            if (p[0] == 2)
+                                scf = $"$$\\frac 2 {{e\\sqrt\\pi\\operatorname{{erfc}}(1)}}$$";
+                            else if ((p[0] & 1) == 0)
+                                scf = $"$$\\frac 2 {{e^{{{p[0] / 2}}}\\sqrt\\pi\\operatorname{{erfc}}({p[0] / 2})}}$$";
+                            else
+                                scf = $"$$\\frac 2 {{\\sqrt\\pi e^\\frac {{{p[0]}}} 2 \\operatorname{{erfc}}(\\frac {{{p[0]}}} 2)}}$$";
+                        }
+                        else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
+                        {
+                            var sq = Math.Sqrt(-q[0]);
+                            var z = sq * sq == -q[0]
+                                ? sq.ToString()
+                                : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
+                            scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
+                        }
+                        else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
+                        {
+                            scf = "$$\\frac1{1-J_0(2)}-1$$";
+                        }
+
+                        if (scf.Length > 0)
+                        {
+                            var line = $"|{sd}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{scf}|{termsUsed}|";
+
+                            lock (Console.Out)
+                            {
+                                Console.WriteLine(line);
+                                file.WriteLine(line);
+                            }
+                        }
                     }
-                }
+                });
 
-                if (!cf.Any())
-                    continue;
-
-                var first = cf.First();
-
-                if (first.Sign < 0)
-                    continue;
-
-                pterms = qterms = 0;
-                var s = CF.Digits(Captured(cf), Sigdig.Count);
-
-                if (s.EndsWith(CF.InvalidDigit))
-                    continue;
-
-                var termsUsed = Math.Max(pterms, qterms);
-                var scf = string.Empty;
-                Sigdig sd = new(s);
-
-                if (lookups.TryGetValue(sd, out var expr))
-                {
-                    scf = "$$" + expr + "$$";
-                }
-                else if (q.Length == 2 && q[0] == 0 && q[1] == 2 && p.Length == 1)
-                {
-                    if (p[0] == 2)
-                        scf = $"$$\\frac 2 {{e\\sqrt\\pi\\operatorname{{erfc}}(1)}}$$";
-                    else if ((p[0] & 1) == 0)
-                        scf = $"$$\\frac 2 {{e^{{{p[0] / 2}}}\\sqrt\\pi\\operatorname{{erfc}}({p[0] / 2})}}$$";
-                    else
-                        scf = $"$$\\frac 2 {{\\sqrt\\pi e^\\frac {{{p[0]}}} 2 \\operatorname{{erfc}}(\\frac {{{p[0]}}} 2)}}$$";
-                }
-                else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
-                {
-                    var sq = Math.Sqrt(-q[0]);
-                    var z = sq * sq == -q[0] 
-                        ? sq.ToString()
-                        : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
-                    scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
-                }
-                else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
-                {
-                    scf = "$$\\frac1{1-J_0(2)}-1$$";
-                }
-
-                if (scf.Length > 0)
-                {
-                    Console.WriteLine($"{s}\t{Poly.ToFactoredString(q)}\t{Poly.ToFactoredString(p)}\t{scf}\t{termsUsed}");
-                }
+                file.WriteLine();
+                file.WriteLine("Done");
+                file.Dispose();
             }
         }
     }
