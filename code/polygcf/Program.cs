@@ -390,7 +390,7 @@ namespace PlutoScarab
                 else if (q.Length == 2 && q[0] == 0 && q[1] == 1 && p.Length == 1)
                 {
                     if ((p[0] & 1) == 0)
-                        scf = "$$\\frac{\\sqrt\\frac2\\pi}{e^{"+ p[0]*p[0]/4 +"}\\operatorname{erfc}(\\frac{" + p[0] + "}{\\sqrt2})}$$";
+                        scf = "$$\\frac{\\sqrt\\frac2\\pi}{e^{"+ p[0]*p[0]/2 +"}\\operatorname{erfc}(\\frac{" + p[0] + "}{\\sqrt2})}$$";
                     else
                         scf = "$$\\frac{\\sqrt\\frac2{\\pi e^{" + p[0]*p[0] + "}}}{\\operatorname{erfc}(\\frac{" + p[0] + "}{\\sqrt2})}$$";
                 }
