@@ -425,8 +425,6 @@ namespace PlutoScarab
                 }
             }
 
-            // lookups[new("15251352761609812090")] = "\\sqrt{\\frac 2 {e\\pi}} \\frac 1 {\\operatorname{erfc}(\\frac 1 {\\sqrt 2})}";
-
 #if true
             var pairs =
                 from score in Enumerable.Range(2, maxScore - 1)
@@ -481,9 +479,7 @@ namespace PlutoScarab
                 {
                     var (P, Q) = (p[0], q[1]);
                     var (a, b) = (P * P, 2 * Q);
-
-                    // sqrt(2q) / (sqrt(pi) * e^(a / b) * erfc(p / sqrt(2q)))
-                    scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), "\\sqrt\\pi " + LaTeXpow("e", a, b) + "\\operatorname{erfc}(" + LaTeXoverSqrt(P, 2 * Q) + ")") + "$$";
+                    scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), "\\sqrt\\pi " + LaTeXpow("e", a, b) + "\\operatorname{erfc}\\left(" + LaTeXoverSqrt(P, 2 * Q) + "\\right)") + "$$";
                 }
                 else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
                 {
