@@ -402,7 +402,7 @@ namespace PlutoScarab
                 }
             }
 
-            lookups[new("15251352761609812090")] = "\\sqrt{\\frac 2 {e\\pi}} \\frac 1 {\\operatorname{erfc}(\\frac 1 {\\sqrt 2})}";
+            // lookups[new("15251352761609812090")] = "\\sqrt{\\frac 2 {e\\pi}} \\frac 1 {\\operatorname{erfc}(\\frac 1 {\\sqrt 2})}";
 
 #if true
             var pairs =
@@ -460,7 +460,7 @@ namespace PlutoScarab
                     var (a, b) = (P * P, 2 * Q);
 
                     // sqrt(2q) / (sqrt(pi) * e^(a / b) * erfc(p / sqrt(2q)))
-                    scf = "$$" + LaTaXfrac(LaTeXsqrt(2 * Q), "\\sqrt\\pi " + LaTeXpow("e", a, b) + "\\operatorname{{erfc}}(" + LaTeXoverSqrt(P, 2 * Q) + ")") + "$$";
+                    scf = "$$" + LaTaXfrac(LaTeXsqrt(2 * Q), "\\sqrt\\pi " + LaTeXpow("e", a, b) + "\\operatorname{erfc}(" + LaTeXoverSqrt(P, 2 * Q) + ")") + "$$";
                 }
                 else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
                 {
