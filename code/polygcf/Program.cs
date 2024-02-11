@@ -53,6 +53,94 @@ namespace PlutoScarab
             return Math.Abs(m) * sign;
         }
 
+        static string LaTeXwrap(object n)
+        {
+            var s = n.ToString();
+
+            if (s.Length == 1)
+                return s;
+
+            return "{" + s + "}";
+        }
+
+        static string LaTaXfrac(string a, string b)
+        {
+            if (b == "1") return a;
+            return "\\frac" + LaTeXwrap(a) + LaTeXwrap(b);
+        }
+
+        static string LaTaXfrac(int a, int b)
+        {
+            var g = GCD(a, b);
+            (a, b) = (a / g, b / g);
+            return LaTaXfrac(a.ToString(), b.ToString());
+        }
+
+        static string LaTeXpow(string expr, int a, int b)
+        {
+            var f = LaTaXfrac(a, b);
+
+            if (f == "0")
+                return "1";
+
+            if (f == "1")
+                return expr;
+
+            return expr + "^" + LaTeXwrap(f);
+        }
+
+        static (int n, int f) SquareFree(int n)
+        {
+            var s = (int)(Math.Sqrt(n) + .5);
+
+            if (s * s == n)
+                return (1, s);
+
+            var f = 1;
+
+            for (var i = 2; i < s; i++)
+            {
+                var ii = i * i;
+
+                if ((n % ii) == 0)
+                {
+                    f *= i;
+                    n /= ii;
+                }
+            }
+
+            return (n, f);
+        }
+
+        static string LaTeXsqrt(int n)
+        {
+            (n, var f) = SquareFree(n);
+
+            if (n == 1)
+                return f.ToString();
+
+            if (f > 1)
+                return f + "\\sqrt" + LaTeXwrap(n);
+
+            return "\\sqrt" + LaTeXwrap(n);
+        }
+
+        static string LaTeXoverSqrt(int a, int b)
+        {
+            (b, var c) = SquareFree(b); // b -> c * sqrt(b')
+
+            if (b == 1)
+                return LaTaXfrac(a, c);
+
+            var g = GCD(a, c);
+            (a, c) = (a / g, c / g);
+
+            if (c == 1)
+                return LaTaXfrac(a.ToString(), LaTeXsqrt(b));
+
+            return LaTaXfrac(a.ToString(), c + LaTeXsqrt(b));
+        }
+
         static void Main(string[] args)
         {
             const int maxScore = 11;
@@ -154,7 +242,7 @@ namespace PlutoScarab
                         if (s.Length >= Sigdig.Count)
                         {
                             Sigdig sd = new(s);
-                            
+
                             lookups.TryAdd(sd, trig + "(" + frac + ")");
                         }
                     }
@@ -366,14 +454,13 @@ namespace PlutoScarab
                 {
                     scf = "$$" + expr + "$$";
                 }
-                else if (q.Length == 2 && q[0] == 0 && q[1] == 2 && p.Length == 1)
+                else if (q.Length == 2 && q[0] == 0 && p.Length == 1)
                 {
-                    if (p[0] == 2)
-                        scf = $"$$\\frac 2 {{e\\sqrt\\pi\\operatorname{{erfc}}(1)}}$$";
-                    else if ((p[0] & 1) == 0)
-                        scf = $"$$\\frac 2 {{e^{{{p[0] / 2}}}\\sqrt\\pi\\operatorname{{erfc}}({p[0] / 2})}}$$";
-                    else
-                        scf = $"$$\\frac 2 {{\\sqrt\\pi e^\\frac {{{p[0]}}} 2 \\operatorname{{erfc}}(\\frac {{{p[0]}}} 2)}}$$";
+                    var (P, Q) = (p[0], q[1]);
+                    var (a, b) = (P * P, 2 * Q);
+
+                    // sqrt(2q) / (sqrt(pi) * e^(a / b) * erfc(p / sqrt(2q)))
+                    scf = "$$" + LaTaXfrac(LaTeXsqrt(2 * Q), "\\sqrt\\pi " + LaTeXpow("e", a, b) + "\\operatorname{{erfc}}(" + LaTeXoverSqrt(P, 2 * Q) + ")") + "$$";
                 }
                 else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
                 {
@@ -386,13 +473,6 @@ namespace PlutoScarab
                 else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
                 {
                     scf = "$$\\frac1{1-J_0(2)}-1$$";
-                }
-                else if (q.Length == 2 && q[0] == 0 && q[1] == 1 && p.Length == 1)
-                {
-                    if ((p[0] & 1) == 0)
-                        scf = "$$\\frac{\\sqrt\\frac2\\pi}{e^{"+ p[0]*p[0]/2 +"}\\operatorname{erfc}(\\frac{" + p[0] + "}{\\sqrt2})}$$";
-                    else
-                        scf = "$$\\frac{\\sqrt\\frac2{\\pi e^{" + p[0]*p[0] + "}}}{\\operatorname{erfc}(\\frac{" + p[0] + "}{\\sqrt2})}$$";
                 }
 
                 if (!results.TryGetValue(sd, out var result) || result.Item4 > termsUsed)
@@ -457,7 +537,7 @@ namespace PlutoScarab
             }
 #endif
 
-            foreach (var score in Enumerable.Range(15, short.MaxValue))
+            foreach (var score in Enumerable.Range(18, short.MaxValue))
             {
                 using var file = File.CreateText($"../../polygcf{score}.md");
                 file.AutoFlush = true;
