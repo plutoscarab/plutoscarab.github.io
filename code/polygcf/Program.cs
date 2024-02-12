@@ -69,6 +69,12 @@ namespace PlutoScarab
             return "\\frac" + LaTeXwrap(a) + LaTeXwrap(b);
         }
 
+        static string LaTeXfracs(string a, string b)
+        {
+            if (b == "1") return a;
+            return a + "/" + b;
+        }
+
         static string LaTeXfrac(int a, int b)
         {
             var g = GCD(a, b);
@@ -76,9 +82,16 @@ namespace PlutoScarab
             return LaTeXfrac(a.ToString(), b.ToString());
         }
 
+        static string LaTeXfracs(int a, int b)
+        {
+            var g = GCD(a, b);
+            (a, b) = (a / g, b / g);
+            return LaTeXfracs(a.ToString(), b.ToString());
+        }
+
         static string LaTeXpow(string expr, int a, int b)
         {
-            var f = LaTeXfrac(a, b);
+            var f = LaTeXfracs(a, b);
 
             if (f == "0")
                 return "1";
@@ -479,7 +492,7 @@ namespace PlutoScarab
                 {
                     var (P, Q) = (p[0], q[1]);
                     var (a, b) = (P * P, 2 * Q);
-                    scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), "\\sqrt\\pi " + LaTeXpow("e", a, b) + "\\operatorname{erfc}\\left(" + LaTeXoverSqrt(P, 2 * Q) + "\\right)") + "$$";
+                    scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), LaTeXpow("e", a, b) + "\\gamma\\left(\\frac12," + LaTeXfrac(a, b) + "\\right)") + "$$";
                 }
                 else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
                 {
