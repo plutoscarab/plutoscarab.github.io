@@ -492,7 +492,7 @@ namespace PlutoScarab
                 {
                     var (P, Q) = (p[0], q[1]);
                     var (a, b) = (P * P, 2 * Q);
-                    scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), LaTeXpow("e", a, b) + "\\gamma\\left(\\frac12," + LaTeXfrac(a, b) + "\\right)") + "$$";
+                    scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), LaTeXpow("e", a, b) + "\\Gamma\\left(\\frac12," + LaTeXfrac(a, b) + "\\right)") + "$$";
                 }
                 else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
                 {
