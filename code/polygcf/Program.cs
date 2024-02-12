@@ -99,6 +99,9 @@ namespace PlutoScarab
             if (f == "1")
                 return expr;
 
+            if (f == "1/2")
+                return "\\sqrt" + LaTeXwrap(expr);
+
             return expr + "^" + LaTeXwrap(f);
         }
 
@@ -177,6 +180,43 @@ namespace PlutoScarab
             return LaTeXprod(LaTeXfrac(a, c), LaTeXsqrt(LaTeXfrac(d, b)));
         }
 
+        static string Lookup(Sigdig sd, ConcurrentDictionary<Sigdig, string> lookups, int[] p, int[] q)
+        {
+            var scf = string.Empty;
+
+            if (q.Length == 1 && p.Length == 1)
+            {
+                if ((p[0] & 1) == 0)
+                    scf = "$$" + (p[0] / 2) + "+" + LaTeXsqrt(p[0] * p[0] / 4 + q[0]) + "$$";
+                else
+                    scf = "$$" + LaTeXfrac(p[0].ToString() + "+" + LaTeXsqrt(p[0] * p[0] + 4 * q[0]), "2") + "$$";
+            }
+            else if (lookups.TryGetValue(sd, out var expr))
+            {
+                scf = "$$" + expr + "$$";
+            }
+            else if (q.Length == 2 && q[0] == 0 && p.Length == 1)
+            {
+                var (P, Q) = (p[0], q[1]);
+                var (a, b) = (P * P, 2 * Q);
+                scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), LaTeXpow("e", a, b) + "\\Gamma\\left(\\frac12," + LaTeXfrac(a, b) + "\\right)") + "$$";
+            }
+            else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
+            {
+                var sq = Math.Sqrt(-q[0]);
+                var z = sq * sq == -q[0]
+                    ? sq.ToString()
+                    : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
+                scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
+            }
+            else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
+            {
+                scf = "$$\\frac1{1-J_0(2)}-1$$";
+            }
+
+            return scf;
+        }
+
         static void Main(string[] args)
         {
             const int maxScore = 11;
@@ -214,15 +254,42 @@ namespace PlutoScarab
                 }
             }
 
-            MobiusOfConst(MpfrFloat.Exp(1), "e");
-            MobiusOfConst(MpfrFloat.Exp(.5), "\\sqrt e");
-            MobiusOfConst(MpfrFloat.Exp(1 / (MpfrFloat)3), "\\sqrt[3]e");
-            MobiusOfConst(MpfrFloat.Exp(.25), "\\sqrt[4]e");
-            MobiusOfConst(MpfrFloat.ConstPi(), "\\pi");
-            MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstPi(), 2), "\\pi^2");
-            MobiusOfConst(MpfrFloat.Sqrt(MpfrFloat.ConstPi()), "\\sqrt\\pi");
-            MobiusOfConst(MpfrFloat.ConstCatalan(), "G");
-            MobiusOfConst(MpfrFloat.Zeta(3), "\\zeta(3)");
+#if BUILD_LOOKUPS
+            foreach (var (a, b) in Seq.Rationals().Take(520).Where((r, _) => r.Item1 < 5 && r.Item2 < 5))
+            {
+                var x = a / (MpfrFloat)b;
+                MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstPi(), x), LaTeXpow("\\pi", a, b));
+                MobiusOfConst(MpfrFloat.Power(MpfrFloat.Exp(1), x), LaTeXpow("e", a, b));
+                MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstCatalan(), x), LaTeXpow("G", a, b));
+
+                for (var z = 3; z <= 7; z += 2)
+                {
+                    MobiusOfConst(MpfrFloat.Power(MpfrFloat.Zeta(z), x), LaTeXpow($"\\zeta({z})", a, b));
+                }
+            }
+
+            {
+                using var file = File.CreateText("lookups.txt");
+
+                foreach (var lkp in lookups)
+                {
+                    file.WriteLine($"{lkp.Key}\t{lkp.Value}");
+                }
+            }
+#else
+            {
+                using var file = File.OpenText("lookups.txt");
+                string s;
+
+                while ((s = file.ReadLine()) != null)
+                {
+                    var t = s.IndexOf('\t');
+                    Sigdig key = new(s[..t]);
+                    var value = s[(t+1)..];
+                    lookups[key] = value;
+                }
+            }
+#endif
 
             Sigdig StrIndex(MpfrFloat f)
             {
@@ -230,6 +297,7 @@ namespace PlutoScarab
                 return new(s);
             }
 
+            /*
             // mixed surds
             var surds =
                 from q in new[] { 2, 3, 5, 6, 7, 10, 11, 13, 14, 15, 17, 19, 21, 22, 23, 26, 29, 30, 31, 33, 34, 35, 37, 38, 39 }
@@ -261,6 +329,7 @@ namespace PlutoScarab
                     lookups.AddOrUpdate(s, s => lk, (s, old) => old.Length > lk.Length ? lk : old);
                 }
             }
+            */
 
             foreach (var (p, q) in Seq.Rationals().TakeWhile(_ => _.Item2 < 100))
             {
@@ -481,34 +550,11 @@ namespace PlutoScarab
                     continue;
 
                 var termsUsed = Math.Max(pterms, qterms);
-                var scf = string.Empty;
                 Sigdig sd = new(s);
-
-                if (lookups.TryGetValue(sd, out var expr))
-                {
-                    scf = "$$" + expr + "$$";
-                }
-                else if (q.Length == 2 && q[0] == 0 && p.Length == 1)
-                {
-                    var (P, Q) = (p[0], q[1]);
-                    var (a, b) = (P * P, 2 * Q);
-                    scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), LaTeXpow("e", a, b) + "\\Gamma\\left(\\frac12," + LaTeXfrac(a, b) + "\\right)") + "$$";
-                }
-                else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
-                {
-                    var sq = Math.Sqrt(-q[0]);
-                    var z = sq * sq == -q[0]
-                        ? sq.ToString()
-                        : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
-                    scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
-                }
-                else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
-                {
-                    scf = "$$\\frac1{1-J_0(2)}-1$$";
-                }
-
+                
                 if (!results.TryGetValue(sd, out var result) || result.Item4 > termsUsed)
                 {
+                    var scf = Lookup(sd, lookups, p, q);
                     results[sd] = (p, q, scf, termsUsed);
                     Console.WriteLine($"{s}\t{termsUsed}");
                 }
@@ -569,7 +615,7 @@ namespace PlutoScarab
             }
 #endif
 
-            foreach (var score in Enumerable.Range(18, short.MaxValue))
+            foreach (var score in Enumerable.Range(19, short.MaxValue))
             {
                 using var file = File.CreateText($"../../polygcf{score}.md");
                 file.AutoFlush = true;
@@ -624,34 +670,8 @@ namespace PlutoScarab
                             continue;
 
                         var termsUsed = Math.Max(pterms, qterms);
-                        var scf = string.Empty;
                         Sigdig sd = new(s);
-
-                        if (lookups.TryGetValue(sd, out var expr))
-                        {
-                            scf = "$$" + expr + "$$";
-                        }
-                        else if (q.Length == 2 && q[0] == 0 && q[1] == 2 && p.Length == 1)
-                        {
-                            if (p[0] == 2)
-                                scf = $"$$\\frac 2 {{e\\sqrt\\pi\\operatorname{{erfc}}(1)}}$$";
-                            else if ((p[0] & 1) == 0)
-                                scf = $"$$\\frac 2 {{e^{{{p[0] / 2}}}\\sqrt\\pi\\operatorname{{erfc}}({p[0] / 2})}}$$";
-                            else
-                                scf = $"$$\\frac 2 {{\\sqrt\\pi e^\\frac {{{p[0]}}} 2 \\operatorname{{erfc}}(\\frac {{{p[0]}}} 2)}}$$";
-                        }
-                        else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
-                        {
-                            var sq = Math.Sqrt(-q[0]);
-                            var z = sq * sq == -q[0]
-                                ? sq.ToString()
-                                : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
-                            scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
-                        }
-                        else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
-                        {
-                            scf = "$$\\frac1{1-J_0(2)}-1$$";
-                        }
+                        var scf = Lookup(sd, lookups, p, q);
 
                         if (scf.Length > 0)
                         {
