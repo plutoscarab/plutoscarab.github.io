@@ -254,13 +254,14 @@ namespace PlutoScarab
                 }
             }
 
-#if false
+#if true
             foreach (var (a, b) in Seq.Rationals().Take(520).Where((r, _) => r.Item1 < 5 && r.Item2 < 5))
             {
                 var x = a / (MpfrFloat)b;
                 MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstPi(), x), LaTeXpow("\\pi", a, b));
                 MobiusOfConst(MpfrFloat.Power(MpfrFloat.Exp(1), x), LaTeXpow("e", a, b));
-                MobiusOfConst(MpfrFloat.Power(MpfrFloat.Log(2), x), LaTeXpow("\\operatorname{{log}}2", a, b));
+                MobiusOfConst(MpfrFloat.Power(MpfrFloat.Exp(MpfrFloat.ConstPi()), x), LaTeXpow("{e^\\pi}", a, b));
+                MobiusOfConst(MpfrFloat.Power(MpfrFloat.Log(2), x), LaTeXpow("{{\\operatorname{{log}}2}}", a, b));
                 MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstCatalan(), x), LaTeXpow("G", a, b));
 
                 for (var z = 3; z <= 7; z += 2)
