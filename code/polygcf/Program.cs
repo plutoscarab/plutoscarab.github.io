@@ -57,7 +57,7 @@ namespace PlutoScarab
         {
             var s = n.ToString();
 
-            if (s.Length == 1)
+            if (s.Length == 1 && !char.IsLetter(s[0]))
                 return s;
 
             return "{" + s + "}";
