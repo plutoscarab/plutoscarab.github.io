@@ -254,12 +254,13 @@ namespace PlutoScarab
                 }
             }
 
-#if BUILD_LOOKUPS
+#if false
             foreach (var (a, b) in Seq.Rationals().Take(520).Where((r, _) => r.Item1 < 5 && r.Item2 < 5))
             {
                 var x = a / (MpfrFloat)b;
                 MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstPi(), x), LaTeXpow("\\pi", a, b));
                 MobiusOfConst(MpfrFloat.Power(MpfrFloat.Exp(1), x), LaTeXpow("e", a, b));
+                MobiusOfConst(MpfrFloat.Power(MpfrFloat.Log(2), x), LaTeXpow("\\operatorname{{log}}2", a, b));
                 MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstCatalan(), x), LaTeXpow("G", a, b));
 
                 for (var z = 3; z <= 7; z += 2)
@@ -268,74 +269,17 @@ namespace PlutoScarab
                 }
             }
 
-            {
-                using var file = File.CreateText("lookups.txt");
-
-                foreach (var lkp in lookups)
-                {
-                    file.WriteLine($"{lkp.Key}\t{lkp.Value}");
-                }
-            }
-#else
-            {
-                using var file = File.OpenText("lookups.txt");
-                string s;
-
-                while ((s = file.ReadLine()) != null)
-                {
-                    var t = s.IndexOf('\t');
-                    Sigdig key = new(s[..t]);
-                    var value = s[(t+1)..];
-                    lookups[key] = value;
-                }
-            }
-#endif
-
             Sigdig StrIndex(MpfrFloat f)
             {
                 var s = MpfrFloat.Abs(f, null).ToString();
                 return new(s);
             }
 
-            /*
-            // mixed surds
-            var surds =
-                from q in new[] { 2, 3, 5, 6, 7, 10, 11, 13, 14, 15, 17, 19, 21, 22, 23, 26, 29, 30, 31, 33, 34, 35, 37, 38, 39 }
-                where Math.Sqrt(q) != (int)Math.Sqrt(q)
-                from a in Enumerable.Range(-9, 19)
-                from b in Enumerable.Range(-9, 19)
-                where (a > 0 || b > 0) && b != 5
-                from c in Enumerable.Range(1, 2)
-                where b != 0
-                let g = GCD(GCD(a, b), c)
-                where g == 1
-                select (q, a, b, c);
-
-            foreach (var (q, a, b, c) in surds)
-            {
-                var sq = MpfrFloat.Sqrt(q);
-                var y = (a + b * sq) / c;
-
-                if (y != (int)y)
-                {
-                    var s = StrIndex(y);
-                    var lk = "";
-                    if (a != 0) lk = a.ToString();
-                    if (a != 0 && b > 0) lk += "+";
-                    if (b != 1) lk += b.ToString();
-                    lk += "\\sqrt{" + q + "}";
-                    if (c != 1) lk = "\\frac{" + lk + "}" + c;
-
-                    lookups.AddOrUpdate(s, s => lk, (s, old) => old.Length > lk.Length ? lk : old);
-                }
-            }
-            */
-
             foreach (var (p, q) in Seq.Rationals().TakeWhile(_ => _.Item2 < 100))
             {
                 var x = (MpfrFloat.ConstPi() * p) / q;
                 var num = Poly.ToFactoredString(new[] { 0, p }, "\\pi");
-                var frac = q == 1 ? num : "\\frac{" + num + "}{" + q + "}";
+                var frac = LaTeXfrac(num, q.ToString());
 
                 void Add(string trig, Func<MpfrFloat, int?, MpfrRounding?, MpfrFloat> func)
                 {
@@ -363,9 +307,7 @@ namespace PlutoScarab
                 Add("cot", (x, _, _) => 1 / MpfrFloat.Tan(x));
                 Add("csc", (x, _, _) => 1 / MpfrFloat.Sin(x));
                 Add("sec", (x, _, _) => 1 / MpfrFloat.Cos(x));
-                Add("exp", MpfrFloat.Exp);
                 Add("ln", MpfrFloat.Log);
-                Add("sqrt", MpfrFloat.Sqrt);
                 Add("tanh", MpfrFloat.Tanh);
                 Add("sinh", MpfrFloat.Sinh);
                 Add("cosh", MpfrFloat.Cosh);
@@ -384,7 +326,7 @@ namespace PlutoScarab
                 }
 
                 x = p / (MpfrFloat)q;
-                frac = q == 1 ? p.ToString() : "\\frac{" + p + "}{" + q + "}";
+                frac = LaTeXfrac(p, q);
 
                 Add("tan", MpfrFloat.Tan);
                 Add("sin", MpfrFloat.Sin);
@@ -392,9 +334,7 @@ namespace PlutoScarab
                 Add("cot", (x, _, _) => 1 / MpfrFloat.Tan(x));
                 Add("csc", (x, _, _) => 1 / MpfrFloat.Sin(x));
                 Add("sec", (x, _, _) => 1 / MpfrFloat.Cos(x));
-                Add("exp", MpfrFloat.Exp);
                 Add("ln", MpfrFloat.Log);
-                Add("sqrt", MpfrFloat.Sqrt);
                 Add("tanh", MpfrFloat.Tanh);
                 Add("sinh", MpfrFloat.Sinh);
                 Add("cosh", MpfrFloat.Cosh);
@@ -507,6 +447,29 @@ namespace PlutoScarab
                 }
             }
 
+            {
+                using var file = File.CreateText("lookups.txt");
+
+                foreach (var lkp in lookups)
+                {
+                    file.WriteLine($"{lkp.Key}\t{lkp.Value}");
+                }
+            }
+#else
+            {
+                using var file = File.OpenText("lookups.txt");
+                string s;
+
+                while ((s = file.ReadLine()) != null)
+                {
+                    var t = s.IndexOf('\t');
+                    Sigdig key = new(s[..t]);
+                    var value = s[(t+1)..];
+                    lookups[key] = value;
+                }
+            }
+#endif
+
 #if true
             var pairs =
                 from score in Enumerable.Range(2, maxScore - 1)
@@ -617,6 +580,7 @@ namespace PlutoScarab
 
             foreach (var score in Enumerable.Range(19, short.MaxValue))
             {
+                break;
                 using var file = File.CreateText($"../../polygcf{score}.md");
                 file.AutoFlush = true;
                 file.WriteLine("|Digits of $$x$$|a<sub>n</sub>|b<sub>n</sub>|Expression|Terms|");
