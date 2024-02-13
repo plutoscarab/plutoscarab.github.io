@@ -10,6 +10,8 @@ using Sdcb.Arithmetic.Mpfr;
 
 namespace PlutoScarab
 {
+    record Info(string Expr, string Family);
+
     class Sigdig : IEquatable<Sigdig>, IComparable<Sigdig>
     {
         public const int Count = 20;
@@ -180,7 +182,7 @@ namespace PlutoScarab
             return LaTeXprod(LaTeXfrac(a, c), LaTeXsqrt(LaTeXfrac(d, b)));
         }
 
-        static string Lookup(Sigdig sd, ConcurrentDictionary<Sigdig, string> lookups, int[] p, int[] q)
+        static string Lookup(Sigdig sd, ConcurrentDictionary<Sigdig, Info> lookups, int[] p, int[] q)
         {
             var scf = string.Empty;
 
@@ -191,9 +193,9 @@ namespace PlutoScarab
                 else
                     scf = "$$" + LaTeXfrac(p[0].ToString() + "+" + LaTeXsqrt(p[0] * p[0] + 4 * q[0]), "2") + "$$";
             }
-            else if (lookups.TryGetValue(sd, out var expr))
+            else if (lookups.TryGetValue(sd, out var info))
             {
-                scf = "$$" + expr + "$$";
+                scf = "$$" + info.Expr + "$$";
             }
             else if (q.Length == 2 && q[0] == 0 && p.Length == 1)
             {
@@ -222,10 +224,12 @@ namespace PlutoScarab
             const int maxScore = 11;
 
             var results = new Dictionary<Sigdig, (int[], int[], string, int)>();
-            var lookups = new ConcurrentDictionary<Sigdig, string>();
+            var lookups = new ConcurrentDictionary<Sigdig, Info>();
             MpfrFloat.DefaultPrecision = 256;
 
-            void MobiusOfConst(MpfrFloat x, string xs)
+#if false
+
+            void MobiusOfConst(MpfrFloat x, string xs, string family)
             {
                 foreach (var (a, b, c, d) in
                     from c in Enumerable.Range(-9, 19)
@@ -250,25 +254,51 @@ namespace PlutoScarab
                     var s = ((a + b * x) / (c + d * x)).ToString();
                     Sigdig sd = new(s);
 
-                    lookups.TryAdd(sd, expr);
+                    lookups.TryAdd(sd, new(expr, family));
                 }
             }
 
-#if true
-            foreach (var (a, b) in Seq.Rationals().Take(520).Where((r, _) => r.Item1 < 5 && r.Item2 < 5))
+            void MobiusOfPower(MpfrFloat f, string fs, string family)
             {
-                var x = a / (MpfrFloat)b;
-                MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstPi(), x), LaTeXpow("\\pi", a, b));
-                MobiusOfConst(MpfrFloat.Power(MpfrFloat.Exp(1), x), LaTeXpow("e", a, b));
-                MobiusOfConst(MpfrFloat.Power(MpfrFloat.Exp(MpfrFloat.ConstPi()), x), LaTeXpow("{e^\\pi}", a, b));
-                MobiusOfConst(MpfrFloat.Power(MpfrFloat.Log(2), x), LaTeXpow("{{\\operatorname{{log}}2}}", a, b));
-                MobiusOfConst(MpfrFloat.Power(MpfrFloat.ConstCatalan(), x), LaTeXpow("G", a, b));
-
-                for (var z = 3; z <= 7; z += 2)
+                foreach (var (a, b) in Seq.Rationals().Take(520).Where((r, _) => r.Item1 < 5 && r.Item2 < 5))
                 {
-                    MobiusOfConst(MpfrFloat.Power(MpfrFloat.Zeta(z), x), LaTeXpow($"\\zeta({z})", a, b));
+                    var x = a / (MpfrFloat)b;
+                    MobiusOfConst(MpfrFloat.Power(f, x), LaTeXpow(fs, a, b), family);
                 }
             }
+
+            MobiusOfPower(MpfrFloat.ConstPi(), "\\pi", "π");
+            MobiusOfPower(MpfrFloat.Exp(1), "e", "e");
+            MobiusOfPower(MpfrFloat.Exp(MpfrFloat.ConstPi()), "{e^\\pi}", "exp π");
+            MobiusOfPower(MpfrFloat.Log(2), "{\\operatorname{log}2}", "log");
+            MobiusOfPower(MpfrFloat.ConstCatalan(), "G", "Catalan");
+            MobiusOfPower(MpfrFloat.ConstEuler(), "γ", "Euler Gamma");
+
+            for (var z = 3; z <= 7; z += 2)
+            {
+                MobiusOfPower(MpfrFloat.Zeta(z), "\\zeta({z})", "Zeta");
+            }
+
+            // first Feigenbaum constant
+            MobiusOfPower(MpfrFloat.Parse("4.669201609102990671853203820466201617258185577475768632745"), "\\delta_F", "Feigenbaum δ");
+
+            // Feigenbaum alpha
+            MobiusOfPower(MpfrFloat.Parse("2.502907875095892822283902873218215786381271376727149977336"), "\\alpha_F", "Feigenbaum α");
+
+            // Conway's constant
+            MobiusOfPower(MpfrFloat.Parse("1.303577269034296391257099112152551890730702504659404875754"), "\\lambda_C", "Conway λ");
+
+            // Khinchin's constant
+            MobiusOfPower(MpfrFloat.Parse("2.685452001065306445309714835481795693820382293994462953051"), "K", "Khinchin");
+
+            // Glaisher-Kinkelin constant 
+            MobiusOfPower(MpfrFloat.Parse("1.2824271291006226368753425688697917277676889273250011920637"), "A", "Glaisher-Kinkelin");
+
+            // Meissel–Mertens constant
+            MobiusOfPower(MpfrFloat.Parse("0.2614972128476427837554268386086958590515666482611992061920"), "M", "Meissel–Mertens");
+
+            // Golomb-Dickman constant
+            MobiusOfPower(MpfrFloat.Parse("0.6243299885435508709929363831008372441796426201805292869735"), "\\lambda_GD", "Golomb-Dickman λ");
 
             Sigdig StrIndex(MpfrFloat f)
             {
@@ -293,7 +323,7 @@ namespace PlutoScarab
                         {
                             Sigdig sd = new(s);
 
-                            lookups.TryAdd(sd, trig + "(" + frac + ")");
+                            lookups.TryAdd(sd, new(trig + "(" + frac + ")", trig));
                         }
                     }
                     //catch
@@ -384,6 +414,7 @@ namespace PlutoScarab
                         var x = (MpfrFloat)n / (MpfrFloat)d;
                         MpfrFloat y;
                         Sigdig s;
+                        var family = "BesselJ";
 
                         for (var k = 0; k < 10; k++)
                         {
@@ -391,59 +422,60 @@ namespace PlutoScarab
                             s = StrIndex(y);
 
                             if (d == 1)
-                                lookups[s] = $"\\frac {{J_{k + 1}({n})}} {{J_{k}({n})}}";
+                                lookups[s] = new($"\\frac {{J_{k + 1}({n})}} {{J_{k}({n})}}", family);
                             else
-                                lookups[s] = $"\\frac {{J_{k + 1}(\\frac {n} {d})}} {{J_{k}(\\frac {n} {d})}}";
+                                lookups[s] = new($"\\frac {{J_{k + 1}(\\frac {n} {d})}} {{J_{k}(\\frac {n} {d})}}", family);
 
                             s = StrIndex(1 / y);
 
                             if (d == 1)
-                                lookups[s] = $"\\frac {{J_{k}({n})}} {{J_{k + 1}({n})}}";
+                                lookups[s] = new($"\\frac {{J_{k}({n})}} {{J_{k + 1}({n})}}", family);
                             else
-                                lookups[s] = $"\\frac {{J_{k}(\\frac {n} {d})}} {{J_{k + 1}(\\frac {n} {d})}}";
+                                lookups[s] = new($"\\frac {{J_{k}(\\frac {n} {d})}} {{J_{k + 1}(\\frac {n} {d})}}", family);
 
                             y = x * MpfrFloat.JN(k + 1, x) / MpfrFloat.JN(k, x);
                             s = StrIndex(y);
 
                             if (d == 1)
                                 if (n == 1)
-                                    lookups[s] = $"\\frac {{J_{k + 1}({n})}} {{J_{k}({n})}}";
+                                    lookups[s] = new($"\\frac {{J_{k + 1}({n})}} {{J_{k}({n})}}", family);
                                 else
-                                    lookups[s] = $"\\frac {{{n} J_{k + 1}({n})}} {{J_{k}({n})}}";
+                                    lookups[s] = new($"\\frac {{{n} J_{k + 1}({n})}} {{J_{k}({n})}}", family);
                             else
                                 if (n == 1)
-                                lookups[s] = $"\\frac {{J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}";
+                                lookups[s] = new($"\\frac {{J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}", family);
                             else
-                                lookups[s] = $"\\frac {{{n} J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}";
+                                lookups[s] = new($"\\frac {{{n} J_{k + 1}(\\frac {n} {d})}} {{{d} J_{k}(\\frac {n} {d})}}", family);
                         }
 
                         y = BesselI(x, .5) / BesselI(x - 1, .5);
                         s = StrIndex(y);
+                        family = "BesselI";
 
                         if (d == 1)
-                            lookups[s] = $"\\frac {{I_{{{n}}}(\\frac 1 2)}} {{I_{{{n - d}}}(\\frac 1 2)}}";
+                            lookups[s] = new($"\\frac {{I_{{{n}}}(\\frac 1 2)}} {{I_{{{n - d}}}(\\frac 1 2)}}", family);
                         else
-                            lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(\\frac 1 2)}} {{I_{{\\frac {n - d} {d}}}(\\frac 1 2)}}";
+                            lookups[s] = new($"\\frac {{I_{{\\frac {n} {d}}}(\\frac 1 2)}} {{I_{{\\frac {n - d} {d}}}(\\frac 1 2)}}", family);
 
                         y = BesselI(x, 1) / BesselI(x - 1, 1);
                         s = StrIndex(y);
 
                         if (d == 1)
-                            lookups[s] = $"\\frac {{I_{{{n}}}(1)}} {{I_{{{n - d}}}(1)}}";
+                            lookups[s] = new($"\\frac {{I_{{{n}}}(1)}} {{I_{{{n - d}}}(1)}}", family);
                         else
-                            lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(1)}} {{I_{{\\frac {n - d} {d}}}(1)}}";
+                            lookups[s] = new($"\\frac {{I_{{\\frac {n} {d}}}(1)}} {{I_{{\\frac {n - d} {d}}}(1)}}", family);
 
                         y = BesselI(x, (MpfrFloat)2 / d) / BesselI(x - 1, (MpfrFloat)2 / d);
                         s = StrIndex(y);
 
                         if (d == 1)
-                            lookups[s] = $"\\frac {{I_{{{n}}}(2)}} {{I_{{{n - d}}}(2)}}";
+                            lookups[s] = new($"\\frac {{I_{{{n}}}(2)}} {{I_{{{n - d}}}(2)}}", family);
                         else if (d == 2)
-                            lookups[s] = $"\\frac {{I_{{\\frac {n} 2}}(1)}} {{I_{{\\frac {n - d} 2}}(1)}}";
+                            lookups[s] = new($"\\frac {{I_{{\\frac {n} 2}}(1)}} {{I_{{\\frac {n - d} 2}}(1)}}", family);
                         else if ((d & 1) == 0)
-                            lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(\\frac 1 {d / 2})}} {{I_{{\\frac {n - d} {d}}}(\\frac 1 {d / 2})}}";
+                            lookups[s] = new($"\\frac {{I_{{\\frac {n} {d}}}(\\frac 1 {d / 2})}} {{I_{{\\frac {n - d} {d}}}(\\frac 1 {d / 2})}}", family);
                         else
-                            lookups[s] = $"\\frac {{I_{{\\frac {n} {d}}}(\\frac 2 {d})}} {{I_{{\\frac {n - d} {d}}}(\\frac 2 {d})}}";
+                            lookups[s] = new($"\\frac {{I_{{\\frac {n} {d}}}(\\frac 2 {d})}} {{I_{{\\frac {n - d} {d}}}(\\frac 2 {d})}}", family);
                     }
                 }
             }
@@ -453,7 +485,7 @@ namespace PlutoScarab
 
                 foreach (var lkp in lookups)
                 {
-                    file.WriteLine($"{lkp.Key}\t{lkp.Value}");
+                    file.WriteLine($"{lkp.Key}\t{lkp.Value.Expr}\t{lkp.Value.Family}");
                 }
             }
 #else
@@ -463,13 +495,15 @@ namespace PlutoScarab
 
                 while ((s = file.ReadLine()) != null)
                 {
-                    var t = s.IndexOf('\t');
-                    Sigdig key = new(s[..t]);
-                    var value = s[(t+1)..];
+                    var t = s.Split('\t');
+                    Sigdig key = new(t[0]);
+                    Info value = new(t[1], t[2]);
                     lookups[key] = value;
                 }
             }
 #endif
+
+            var families = lookups.Values.Select(v => v.Family).Distinct().ToList();
 
 #if true
             var pairs =
