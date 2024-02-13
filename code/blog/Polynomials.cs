@@ -30,6 +30,108 @@ namespace PlutoScarab
             .SelectMany(_ => _)
             .Concat(new[] { Monomial(degree, coeffTotal), Monomial(degree, -coeffTotal) });
 
+        public static BigInteger Binomial(BigInteger n, BigInteger k)
+        {
+            if (n < k) return 0;
+            if (k == 0) return 1;
+            k = BigInteger.Min(k, n - k);
+            if (k == 1) return n;
+            BigInteger i = 0, p = 1;
+
+            while (true)
+            {
+                if (i >= k)
+                    return p;
+
+                (i, p) = (i + 1, (n - i) * p / (i + 1));
+            }
+        }
+
+        private static BigInteger UpperBinomial(BigInteger k, BigInteger n)
+        {
+            var to = k;
+
+            while (Binomial(to, k) <= n + k)
+            {
+                to *= 2;
+            }
+
+            var from = to / 2;
+
+            while (from != to)
+            {
+                var mid = (from + to) / 2;
+
+                if (Binomial(mid, k) > n)
+                    to = mid;
+                else
+                    from = mid + 1;
+            }
+
+            return from;
+        }
+
+        private static List<BigInteger> BinomialDigits(BigInteger k, BigInteger n)
+        {
+            List<BigInteger> list = [];
+
+            while (!k.IsZero)
+            {
+                var m = UpperBinomial(k, n) - 1;
+                list.Add(m);
+                n -= Binomial(m, k--);
+            }
+
+            return list;
+        }
+
+        private static int[] ToTuple(BigInteger n, int length)
+        {
+            if (length < 1)
+                throw new ArgumentOutOfRangeException(nameof(length));
+
+            var list = BinomialDigits(length, n);
+            var arr = new int[length];
+            arr[0] = (int)list[^1];
+
+            for (var i = 1; i < length; i++)
+            {
+                arr[i] = (int)(list[length - 1 - i] - list[length - i] - 1);
+            }
+
+            return arr;
+        }
+
+        public static IEnumerable<int[]> WithDegree(int degree)
+        {
+            BigInteger n = 0;
+
+            while (true)
+            {
+                var t = ToTuple(n, degree + 1);
+                t[^1]++;
+                t = t.Select(c => (c & 1) == 0 ? -c / 2 : c / 2 + 1).ToArray();
+                yield return t;
+                n++;
+            }
+        }
+
+        public static IEnumerable<(int[], int[])> WithDegree(int degree1, int degree2)
+        {
+            var degree = degree1 + degree2 + 1;
+            BigInteger n = 0;
+
+            while (true)
+            {
+                var t = ToTuple(n, degree + 1);
+                t[degree1]++;
+                t[^1]++;
+                t = t.Select(c => (c & 1) == 0 ? -c / 2 : c / 2 + 1).ToArray();
+                yield return (t[..(degree1 + 1)], t[(degree1 + 1)..]);
+                n++;
+            }
+        }
+
         public static int[] Monomial(int degree, int coeff)
         {
             if (degree < 0) throw new ArgumentOutOfRangeException(nameof(degree));
@@ -115,6 +217,8 @@ namespace PlutoScarab
 
         public static string ToFactoredString(int[] poly, string indeterminate)
         {
+            poly = (int[])poly.Clone();
+
             if (poly.Count(coeff => coeff != 0) == 1)
             {
                 return ToString(poly, indeterminate);

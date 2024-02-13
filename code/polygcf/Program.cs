@@ -159,14 +159,14 @@ namespace PlutoScarab
             if (b == "1")
                 return a;
 
-            return a + " " + b;    
+            return a + " " + b;
         }
 
         static string LaTeXoverSqrt(int a, int b)
         {
             // a / sqrt(b)
             (b, var c) = SquareFree(b); // -> a / (c * sqrt(b))
-                
+
             var d = GCD(a, b);  // (a/d)*sqrt(d) / (c * sqrt(b/d))
             (a, b) = (a / d, b / d); // a sqrt(d) / (c sqrt(b))
 
@@ -182,9 +182,10 @@ namespace PlutoScarab
             return LaTeXprod(LaTeXfrac(a, c), LaTeXsqrt(LaTeXfrac(d, b)));
         }
 
-        static string Lookup(Sigdig sd, ConcurrentDictionary<Sigdig, Info> lookups, int[] p, int[] q)
+        static Info Lookup(Sigdig sd, ConcurrentDictionary<Sigdig, Info> lookups, int[] p, int[] q)
         {
             var scf = string.Empty;
+            var family = string.Empty;
 
             if (q.Length == 1 && p.Length == 1)
             {
@@ -192,16 +193,20 @@ namespace PlutoScarab
                     scf = "$$" + (p[0] / 2) + "+" + LaTeXsqrt(p[0] * p[0] / 4 + q[0]) + "$$";
                 else
                     scf = "$$" + LaTeXfrac(p[0].ToString() + "+" + LaTeXsqrt(p[0] * p[0] + 4 * q[0]), "2") + "$$";
+
+                family = "Surd";
             }
             else if (lookups.TryGetValue(sd, out var info))
             {
                 scf = "$$" + info.Expr + "$$";
+                family = info.Family;
             }
             else if (q.Length == 2 && q[0] == 0 && p.Length == 1)
             {
                 var (P, Q) = (p[0], q[1]);
                 var (a, b) = (P * P, 2 * Q);
                 scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), LaTeXpow("e", a, b) + "\\Gamma\\left(\\frac12," + LaTeXfrac(a, b) + "\\right)") + "$$";
+                family = "erfc";
             }
             else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
             {
@@ -210,22 +215,40 @@ namespace PlutoScarab
                     ? sq.ToString()
                     : q[0] > -10 ? $"\\sqrt{-q[0]}" : $"\\sqrt{{{-q[0]}}}";
                 scf = $"$${{{-q[0]}\\over 1-{z}\\cot{{{z}}}}}$$";
+                family = "cot";
             }
             else if (q.Length == 3 && q[0] == 0 && q[1] == 0 && q[2] == 1 && p.Length == 3 && p[0] == 0 && p[1] == 2 && p[2] == 1)
             {
                 scf = "$$\\frac1{1-J_0(2)}-1$$";
+                family = "Bessel J0";
             }
 
-            return scf;
+            return new(scf, family);
         }
 
         static void Main(string[] args)
         {
             const int maxScore = 11;
 
-            var results = new Dictionary<Sigdig, (int[], int[], string, int)>();
-            var lookups = new ConcurrentDictionary<Sigdig, Info>();
+            Dictionary<Sigdig, (int[], int[], string, int)> results = new();
+            ConcurrentDictionary<Sigdig, Info> lookups = new();
             MpfrFloat.DefaultPrecision = 256;
+
+            {
+                Random rand = new();
+
+                IEnumerable<long> EulerBits(Random rand)
+                {
+                    long d = 2;
+
+                    while (rand.Next(2) == 0)
+                        d *= 2;
+
+                    yield return d;
+                }
+
+
+            }
 
 #if false
 
@@ -323,7 +346,7 @@ namespace PlutoScarab
                         {
                             Sigdig sd = new(s);
 
-                            lookups.TryAdd(sd, new(trig + "(" + frac + ")", trig));
+                            lookups.TryAdd(sd, new(trig + "\\left(" + frac + "\\right)", trig));
                         }
                     }
                     //catch
@@ -497,7 +520,7 @@ namespace PlutoScarab
                 {
                     var t = s.Split('\t');
                     Sigdig key = new(t[0]);
-                    Info value = new(t[1], t[2]);
+                    Info value = new(t[1].Replace("{{", "{ {"), t[2]);
                     lookups[key] = value;
                 }
             }
@@ -549,11 +572,11 @@ namespace PlutoScarab
 
                 var termsUsed = Math.Max(pterms, qterms);
                 Sigdig sd = new(s);
-                
+
                 if (!results.TryGetValue(sd, out var result) || result.Item4 > termsUsed)
                 {
-                    var scf = Lookup(sd, lookups, p, q);
-                    results[sd] = (p, q, scf, termsUsed);
+                    var info = Lookup(sd, lookups, p, q);
+                    results[sd] = (p, q, info.Expr, termsUsed);
                     Console.WriteLine($"{s}\t{termsUsed}");
                 }
             }
@@ -590,7 +613,9 @@ namespace PlutoScarab
 
                     if (scf.Length > 0)
                     {
-                        file.WriteLine($"|{value}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{scf}|{tu}|");
+                        var qs = Poly.ToFactoredString(q);
+                        var ps = Poly.ToFactoredString(p);
+                        file.WriteLine($"|{value}|{qs}|{ps}|{scf}|{tu}|");
                     }
                 }
 
@@ -613,9 +638,9 @@ namespace PlutoScarab
             }
 #endif
 
+#if false
             foreach (var score in Enumerable.Range(19, short.MaxValue))
             {
-                break;
                 using var file = File.CreateText($"../../polygcf{score}.md");
                 file.AutoFlush = true;
                 file.WriteLine("|Digits of $$x$$|a<sub>n</sub>|b<sub>n</sub>|Expression|Terms|");
@@ -670,7 +695,8 @@ namespace PlutoScarab
 
                         var termsUsed = Math.Max(pterms, qterms);
                         Sigdig sd = new(s);
-                        var scf = Lookup(sd, lookups, p, q);
+                        var info = Lookup(sd, lookups, p, q);
+                        var scf = info.Expr;
 
                         if (scf.Length > 0)
                         {
@@ -689,6 +715,80 @@ namespace PlutoScarab
                 file.WriteLine("Done");
                 file.Dispose();
             }
+#endif
+
+#if true
+
+            Dictionary<string, StreamWriter> files = new();
+
+            Parallel.ForEach(Poly.WithDegree(3, 6), (pq, _) =>
+            {
+                var (p, q) = pq;
+                int pterms = 0, qterms = 0;
+                var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
+                var qs = CF.Nats().Skip(1).Select(n => { qterms++; return Poly.Eval(q, n); });
+                var cf = CF.Simplify(ps, qs);
+                List<BigInteger> capture = null;
+
+                IEnumerable<BigInteger> Captured(IEnumerable<BigInteger> terms)
+                {
+                    capture = new List<BigInteger>();
+
+                    foreach (var term in terms)
+                    {
+                        capture.Add(term);
+                        yield return term;
+                    }
+                }
+
+                if (!cf.Any())
+                    return;
+
+                var first = cf.First();
+
+                if (first.Sign < 0)
+                    return;
+
+                pterms = qterms = 0;
+                var s = CF.Digits(Captured(cf), Sigdig.Count);
+
+                if (s.EndsWith(CF.InvalidDigit))
+                    return;
+
+                var termsUsed = Math.Max(pterms, qterms);
+                Sigdig sd = new(s);
+                var info = Lookup(sd, lookups, p, q);
+                var scf = info.Expr;
+                var family = info.Family;
+
+                if (scf.Length > 0)
+                {
+                    var line = $"|{sd}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{scf}|{termsUsed}|";
+                    StreamWriter file;
+
+                    lock (files)
+                    {
+                        if (!files.TryGetValue(family, out file))
+                        {
+                            files[family] = file = File.CreateText(family.Replace(" ", "_") + ".md");
+                            file.AutoFlush = true;
+                            file.WriteLine("|Digits of $$x$$|$$a_n$$|$$b_n$$|Expression|Terms|");
+                            file.WriteLine("|--------------|----|----|---------|-----|");
+                        }
+                    }
+
+                    lock (Console.Out)
+                    {
+                        Console.WriteLine(line);
+                    }
+
+                    lock (file)
+                    {
+                        file.WriteLine(line);
+                    }
+                }
+            });
+#endif
         }
     }
 }
