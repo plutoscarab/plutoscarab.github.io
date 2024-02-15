@@ -234,22 +234,6 @@ namespace PlutoScarab
             ConcurrentDictionary<Sigdig, Info> lookups = new();
             MpfrFloat.DefaultPrecision = 256;
 
-            {
-                Random rand = new();
-
-                IEnumerable<long> EulerBits(Random rand)
-                {
-                    long d = 2;
-
-                    while (rand.Next(2) == 0)
-                        d *= 2;
-
-                    yield return d;
-                }
-
-
-            }
-
 #if false
 
             void MobiusOfConst(MpfrFloat x, string xs, string family)

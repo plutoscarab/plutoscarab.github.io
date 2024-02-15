@@ -148,12 +148,12 @@ namespace PlutoScarab
                         // Write the digit. 
                         writer.Write((int)n);
                         nonZeroDigit |= n != 0;
-                        
+
                         if (nonZeroDigit)
                         {
                             places--;
                         }
-                        
+
                         loops = 0;
 
                         // Take the remainder and multiply by 10 again to set up for next digit.
@@ -200,6 +200,9 @@ namespace PlutoScarab
         public static IEnumerable<BigInteger> Simplify(
             IEnumerable<BigInteger> ts,
             IEnumerable<BigInteger> us) => Simplify(ts, us, 400, TimeoutBehavior.Signal);
+
+        public static IEnumerable<BigInteger> Simplify(
+            IEnumerable<(BigInteger, BigInteger)> terms) => Simplify(terms, 400, TimeoutBehavior.Signal);
 
         public static IEnumerable<BigInteger> Simplify(
             IEnumerable<BigInteger> ts,
@@ -301,21 +304,45 @@ namespace PlutoScarab
             }
         }
 
-        private static readonly double Scale = System.Math.Pow(2, -53);
-
-        public static IEnumerable<BigInteger> Random(int seed)
+        public static IEnumerable<BigInteger> Random(Random rand)
         {
-            var rand = new System.Random(seed);
-            var x = rand.NextDouble();
-            yield return BigInteger.Zero;
+            const ulong msb = 1UL << 63;
+            const int bufsize = 16;
+
+            // Generate random p/q in (0, 1)
+            var q = msb;
+            var p = (ulong)rand.NextInt64() | 1;
+
+            // Integer part is always 0
+            yield return 0;
+
+            // Initialize a pool of random bits
+            var noise = new byte[bufsize];
+            rand.NextBytes(noise);
+            var b = bufsize;
 
             while (true)
             {
-                x = 1 / x;
-                var n = (int)x;
-                yield return n;
-                x -= n;
-                x += rand.NextDouble() * Scale;
+                // Get integer portion of reciprocal
+                var n = q / p;
+                yield return (long)n;
+
+                // Take remainder
+                (p, q) = (q - n * p, p);
+
+                // Shift to restore precision
+                var shift = Math.Min(8, 63 - Math.ILogB(q));
+                (p, q) = (p << shift, q << shift);
+
+                // Add noise to least significant bits
+                p ^= noise[--b];
+                q ^= noise[--b];
+
+                if (b == 0)
+                {
+                    rand.NextBytes(noise);
+                    b = bufsize;
+                }
             }
         }
 
@@ -402,7 +429,7 @@ namespace PlutoScarab
                         break;
 
                     default:
-                        throw new InvalidOperationException($"{nameof(BigInteger)}.Sign returned something other that -1, 0, or 1.");
+                        throw new InvalidOperationException($"{nameof(BigInteger)}.Sign returned something other than -1, 0, or 1.");
                 }
             }
 
@@ -413,6 +440,52 @@ namespace PlutoScarab
             }
 
             return result;
+        }
+
+        public static IEnumerable<BigInteger> FromDouble(double d)
+        {
+            if (double.IsNaN(d))
+                throw new ArgumentOutOfRangeException();
+
+            if (double.IsInfinity(d))
+            {
+                yield break;
+            }
+
+            if (d == 0.0)
+            {
+                yield return 0;
+                yield break;
+            }
+
+            long n = BitConverter.DoubleToInt64Bits(d);
+            bool negative = n < 0;
+            int exp = (int)(n >> 52) & 0x7FF;
+            long mantissa = n & 0xFFFFFFFFFFFFF;
+
+            if (exp == 0)
+            {
+                exp = -1022;
+            }
+            else
+            {
+                mantissa |= 0x10000000000000;
+                exp -= 1023;
+            }
+
+            exp -= 52;
+            long numerator = mantissa;
+            if (negative) numerator *= -1;
+
+            if (exp >= 0)
+            {
+                yield return (BigInteger)numerator * BigInteger.Pow(2, exp);
+            }
+            else
+            {
+                foreach (var t in FromRatio(numerator, BigInteger.Pow(2, -exp)))
+                    yield return t;
+            }
         }
     }
 }
