@@ -346,6 +346,9 @@ namespace PlutoScarab
             }
         }
 
+        public static IEnumerable<BigInteger> FromRational(Rational r) =>
+            FromRatio(r.p, r.q);
+        
         public static IEnumerable<BigInteger> FromRatio(BigInteger p, BigInteger q)
         {
             if (p.Sign * q.Sign == -1)
@@ -442,50 +445,7 @@ namespace PlutoScarab
             return result;
         }
 
-        public static IEnumerable<BigInteger> FromDouble(double d)
-        {
-            if (double.IsNaN(d))
-                throw new ArgumentOutOfRangeException();
-
-            if (double.IsInfinity(d))
-            {
-                yield break;
-            }
-
-            if (d == 0.0)
-            {
-                yield return 0;
-                yield break;
-            }
-
-            long n = BitConverter.DoubleToInt64Bits(d);
-            bool negative = n < 0;
-            int exp = (int)(n >> 52) & 0x7FF;
-            long mantissa = n & 0xFFFFFFFFFFFFF;
-
-            if (exp == 0)
-            {
-                exp = -1022;
-            }
-            else
-            {
-                mantissa |= 0x10000000000000;
-                exp -= 1023;
-            }
-
-            exp -= 52;
-            long numerator = mantissa;
-            if (negative) numerator *= -1;
-
-            if (exp >= 0)
-            {
-                yield return (BigInteger)numerator * BigInteger.Pow(2, exp);
-            }
-            else
-            {
-                foreach (var t in FromRatio(numerator, BigInteger.Pow(2, -exp)))
-                    yield return t;
-            }
-        }
+        public static IEnumerable<BigInteger> FromDouble(double d) =>
+            FromRational((Rational)d);
     }
 }
