@@ -234,7 +234,7 @@ namespace PlutoScarab
             ConcurrentDictionary<Sigdig, Info> lookups = new();
             MpfrFloat.DefaultPrecision = 256;
 
-#if false
+#if true
 
             void MobiusOfConst(MpfrFloat x, string xs, string family)
             {
@@ -264,6 +264,12 @@ namespace PlutoScarab
                     lookups.TryAdd(sd, new(expr, family));
                 }
             }
+
+            // Lemniscate constant
+            MobiusOfConst(MpfrFloat.Parse("2.6220575542921198104648395898911194136827549514316231628168"), "\\varpi", "Lemniscate ϖ");
+
+            // Gauss AGM(1, sqrt(2))
+            MobiusOfConst(AGM(1, MpfrFloat.Sqrt(2)), "{\\operatorname{AGM}\\left(1,\\sqrt2\\right)}", "Gauss G");
 
             void MobiusOfPower(MpfrFloat f, string fs, string family)
             {
@@ -313,8 +319,29 @@ namespace PlutoScarab
                 return new(s);
             }
 
+            MpfrFloat AGM(MpfrFloat a, MpfrFloat b)
+            {
+                while (a != b)
+                {
+                    (var old, a, b) = (a, (a + b) / 2, MpfrFloat.Sqrt(a * b));
+
+                    if (a == old || b == old)
+                        break;
+                }
+
+                return a;
+            }
+
             foreach (var (p, q) in Seq.Rationals().TakeWhile(_ => _.Item2 < 100))
             {
+                if (p < q)
+                {
+                    var agm = AGM(p, q);
+                    var s = agm.ToString();
+                    Sigdig sd = new(s);
+                    lookups.TryAdd(sd, new("{\\operatorname{AGM}\\left(" + p + "," + q + "\\right)}", "AGM"));
+                }
+
                 var x = (MpfrFloat.ConstPi() * p) / q;
                 var num = Poly.ToFactoredString(new[] { 0, p }, "\\pi");
                 var frac = LaTeXfrac(num, q.ToString());
@@ -492,7 +519,8 @@ namespace PlutoScarab
 
                 foreach (var lkp in lookups)
                 {
-                    file.WriteLine($"{lkp.Key}\t{lkp.Value.Expr}\t{lkp.Value.Family}");
+                    var e = lkp.Value.Expr.Replace("{{", "{ {"); // Fixes rendering of "log2" instead of "log 2"
+                    file.WriteLine($"{lkp.Key}\t{e}\t{lkp.Value.Family}");
                 }
             }
 #else
@@ -504,7 +532,7 @@ namespace PlutoScarab
                 {
                     var t = s.Split('\t');
                     Sigdig key = new(t[0]);
-                    Info value = new(t[1].Replace("{{", "{ {"), t[2]);
+                    Info value = new(t[1].Replace("{{", "{ {"), t[2]); // Fixes rendering of "log2" instead of "log 2"
                     lookups[key] = value;
                 }
             }
@@ -527,6 +555,7 @@ namespace PlutoScarab
                 var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
                 var qs = CF.Nats().Skip(1).Select(n => { qterms++; return Poly.Eval(q, n); });
                 var cf = CF.Simplify(ps, qs);
+                var cfk = cf.Take(20).ToList();
                 List<BigInteger> capture = null;
 
                 IEnumerable<BigInteger> Captured(IEnumerable<BigInteger> terms)
@@ -701,11 +730,11 @@ namespace PlutoScarab
             }
 #endif
 
-#if true
+#if false
 
             Dictionary<string, StreamWriter> files = new();
 
-            Parallel.ForEach(Poly.WithDegree(3, 6), (pq, _) =>
+            Parallel.ForEach(Poly.WithDegree(1, 2), (pq, _) =>
             {
                 var (p, q) = pq;
                 int pterms = 0, qterms = 0;
@@ -745,7 +774,8 @@ namespace PlutoScarab
                 var scf = info.Expr;
                 var family = info.Family;
 
-                if (scf.Length > 0)
+                //if (scf.Length > 0)
+                if (family == "AGM")
                 {
                     var line = $"|{sd}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{scf}|{termsUsed}|";
                     StreamWriter file;
