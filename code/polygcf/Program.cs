@@ -39,6 +39,10 @@ namespace PlutoScarab
         public override bool Equals(object other) => other is Sigdig sd && s.Equals(sd);
 
         public int CompareTo(Sigdig other) => s.CompareTo(other.s);
+
+        public static bool operator ==(Sigdig a, Sigdig b) => a.Equals(b);
+
+        public static bool operator !=(Sigdig a, Sigdig b) => !a.Equals(b);
     }
 
     class Program
@@ -226,23 +230,163 @@ namespace PlutoScarab
             return new(scf, family);
         }
 
+        static int[] PSLQ(double[] x)
+        {
+            var γ = 2 / Math.Sqrt(3);
+            var n = x.Length;
+            var A = new double[n + 1, n + 1];
+            var B = new double[n + 1, n + 1];
+
+            for (var i = 1; i <= n; i++)
+                A[i, i] = B[i, i] = 1.0;
+
+            var s = new double[n + 1];
+
+            for (var k = 1; k <= n; k++)
+                s[k] = Math.Sqrt(Enumerable.Range(k, n - k + 1).Select(j => x[j - 1] * x[j - 1]).Sum());
+
+            var y = new double[n + 1];
+            var t = s[1];
+
+            for (var k = 1; k <= n; k++)
+            {
+                y[k] = x[k - 1] / t;
+                s[k] /= t;
+            }
+
+            var H = new double[n + 1, n];
+
+            for (var i = 1; i <= n; i++)
+            {
+                if (i < n) H[i, i] = s[i + 1] / s[i];
+
+                for (var j = 1; j < i; j++)
+                    H[i, j] = -y[i] * y[j] / (s[j] * s[j + 1]);
+            }
+
+            for (var i = 2; i <= n; i++)
+            {
+                for (var j = i - 1; j >= 1; j--)
+                {
+                    t = Math.Round(H[i, j] / H[j, j]);
+                    y[j] += t * y[i];
+
+                    for (var k = 1; k <= j; k++)
+                        H[i, k] -= t * H[j, k];
+
+                    for (var k = 1; k <= n; k++)
+                    {
+                        A[i, k] -= t * A[j, k];
+                        B[k, j] += t * B[k, i];
+                    }
+                }
+            }
+
+            while (true)
+            {
+                var max = double.MinValue;
+                var m = -1;
+
+                for (var i = 1; i < n; i++)
+                {
+                    var q = Math.Pow(γ, i) * Math.Abs(H[i, i]);
+                    if (q > max) { max = q; m = i; }
+                }
+
+                (y[m], y[m + 1]) = (y[m + 1], y[m]);
+
+                for (var i = 1; i <= n; i++)
+                    (A[m, i], A[m + 1, i]) = (A[m + 1, i], A[m, i]);
+
+                for (var i = 1; i < n; i++)
+                    (H[m, i], H[m + 1, i]) = (H[m + 1, i], H[m, i]);
+
+                for (var i = 1; i <= n; i++)
+                    (B[i, m], B[i, m + 1]) = (B[i, m + 1], B[i, m]);
+
+                if (m <= n - 2)
+                {
+                    var t0 = Math.Sqrt(Math.Pow(H[m, m], 2) + Math.Pow(H[m, m + 1], 2));
+                    var t1 = H[m, m] / t0;
+                    var t2 = H[m, m + 1] / t0;
+
+                    for (var i = m; i <= n; i++)
+                    {
+                        var t3 = H[i, m];
+                        var t4 = H[i, m + 1];
+                        H[i, m] = t1 * t3 + t2 * t4;
+                        H[i, m + 1] = -t2 * t3 + t1 * t4;
+                    }
+                }
+
+                for (var i = m + 1; i <= n; i++)
+                {
+                    for (var j = Math.Min(i - 1, m + 1); j >= 1; j--)
+                    {
+                        t = Math.Round(H[i, j] / H[j, j]);
+                        y[j] += t * y[i];
+
+                        for (var k = 1; k <= j; k++)
+                            H[i, k] -= t * H[j, k];
+
+                        for (var k = 1; k <= n; k++)
+                        {
+                            A[i, k] -= t * A[j, k];
+                            B[k, j] += t * B[k, i];
+                        }
+                    }
+                }
+
+                var min = double.MaxValue;
+                var c = -1;
+
+                for (var i = 1; i <= n; i++)
+                {
+                    if (Math.Abs(y[i]) < min) { min = Math.Abs(y[i]); c = i; }
+                }
+
+                if (min < 1e-7)
+                {
+                    var result = new int[n];
+
+                    for (var i = 1; i <= n; i++)
+                        result[i - 1] = (int)Math.Round(B[i, c]);
+
+                    return result;
+                }
+            }
+        }
+
+        static MpfrFloat AGM(MpfrFloat a, MpfrFloat b)
+        {
+            while (a != b)
+            {
+                (var old, a, b) = (a, (a + b) / 2, MpfrFloat.Sqrt(a * b));
+
+                if (a == old || b == old)
+                    break;
+            }
+
+            return a;
+        }
+
         static void Main(string[] args)
         {
+            MpfrFloat.DefaultPrecision = 256;
+            var ϖ = MpfrFloat.Parse("2.6220575542921198104648395898911194136827549514316231628168");
+
             const int maxScore = 11;
 
             Dictionary<Sigdig, (int[], int[], string, int)> results = new();
             ConcurrentDictionary<Sigdig, Info> lookups = new();
-            MpfrFloat.DefaultPrecision = 256;
 
-#if true
-
-            void MobiusOfConst(MpfrFloat x, string xs, string family)
+            void MobiusOfConst(MpfrFloat x, string xs, string family, int max = 9)
             {
                 foreach (var (a, b, c, d) in
-                    from c in Enumerable.Range(-9, 19)
-                    from d in Enumerable.Range(-9, 19)
-                    from a in Enumerable.Range(-9, 19)
-                    from b in Enumerable.Range(-9, 19)
+                    from c in Enumerable.Range(-max, 2 * max + 1)
+                    from d in Enumerable.Range(-max, 2 * max + 1)
+                    from a in Enumerable.Range(-max, 2 * max + 1)
+                    from b in Enumerable.Range(-max, 2 * max + 1)
                     select (a, b, c, d))
                 {
                     var q = c + d * x;
@@ -265,8 +409,10 @@ namespace PlutoScarab
                 }
             }
 
+#if false
+
             // Lemniscate constant
-            MobiusOfConst(MpfrFloat.Parse("2.6220575542921198104648395898911194136827549514316231628168"), "\\varpi", "Lemniscate ϖ");
+            MobiusOfConst(ϖ, "\\varpi", "Lemniscate ϖ");
 
             // Gauss AGM(1, sqrt(2))
             MobiusOfConst(AGM(1, MpfrFloat.Sqrt(2)), "{\\operatorname{AGM}\\left(1,\\sqrt2\\right)}", "Gauss G");
@@ -317,19 +463,6 @@ namespace PlutoScarab
             {
                 var s = MpfrFloat.Abs(f, null).ToString();
                 return new(s);
-            }
-
-            MpfrFloat AGM(MpfrFloat a, MpfrFloat b)
-            {
-                while (a != b)
-                {
-                    (var old, a, b) = (a, (a + b) / 2, MpfrFloat.Sqrt(a * b));
-
-                    if (a == old || b == old)
-                        break;
-                }
-
-                return a;
             }
 
             foreach (var (p, q) in Seq.Rationals().TakeWhile(_ => _.Item2 < 100))
@@ -524,6 +657,7 @@ namespace PlutoScarab
                 }
             }
 #else
+#if false
             {
                 using var file = File.OpenText("lookups.txt");
                 string s;
@@ -537,10 +671,11 @@ namespace PlutoScarab
                 }
             }
 #endif
+#endif
 
             var families = lookups.Values.Select(v => v.Family).Distinct().ToList();
 
-#if true
+#if false
             var pairs =
                 from score in Enumerable.Range(2, maxScore - 1)
                 from score1 in Enumerable.Range(1, score - 1)
@@ -730,13 +865,34 @@ namespace PlutoScarab
             }
 #endif
 
-#if false
-
+#if true
             Dictionary<string, StreamWriter> files = new();
+
+            var consts = new[]
+            {
+                (MpfrFloat.ConstPi(), "\\pi", "π"),
+                (AGM(1, MpfrFloat.Sqrt(2)), "{\\operatorname{M}(1,\\sqrt2)}", "AGM"),
+                (ϖ, "\\varpi", "ϖ"),
+                (MpfrFloat.Exp(1.0), "e", "e"),
+            };
+
+            int Content(int[] a)
+            {
+                a = a.Select(Math.Abs).Where(i => i != 0).ToArray();
+                if (a.Length == 1) return a[0];
+                return a.Aggregate(GCD);
+            }
 
             Parallel.ForEach(Poly.WithDegree(1, 2), (pq, _) =>
             {
+                MpfrFloat.DefaultPrecision = 256;
                 var (p, q) = pq;
+                var contentP = Content(p);
+                var contentQ = Content(q);
+
+                if (contentP > 1 && contentP * contentP == contentQ)
+                    return;
+
                 int pterms = 0, qterms = 0;
                 var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
                 var qs = CF.Nats().Skip(1).Select(n => { qterms++; return Poly.Eval(q, n); });
@@ -769,36 +925,77 @@ namespace PlutoScarab
                     return;
 
                 var termsUsed = Math.Max(pterms, qterms);
+                var y = double.Parse(s);
                 Sigdig sd = new(s);
-                var info = Lookup(sd, lookups, p, q);
-                var scf = info.Expr;
-                var family = info.Family;
 
-                //if (scf.Length > 0)
-                if (family == "AGM")
+                foreach (var (x, xs, family) in consts)
                 {
-                    var line = $"|{sd}|{Poly.ToFactoredString(q)}|{Poly.ToFactoredString(p)}|{scf}|{termsUsed}|";
-                    StreamWriter file;
+                    var pslq = PSLQ(new[] { 1.0, (double)x, -y, -y * (double)x });
+                    var ecf = (pslq[0] + x * pslq[1]) / (pslq[2] + x * pslq[3]);
+                    var ecfs = ecf.ToString();
 
-                    lock (files)
+                    if (ecfs.Length < Sigdig.Count + 5)
+                        return;
+
+                    Sigdig cd = new(ecfs);
+
+                    if (cd == sd)
                     {
-                        if (!files.TryGetValue(family, out file))
+                        if (pslq[0] + x * pslq[1] < 0)
                         {
-                            files[family] = file = File.CreateText(family.Replace(" ", "_") + ".md");
-                            file.AutoFlush = true;
-                            file.WriteLine("|Digits of $$x$$|$$a_n$$|$$b_n$$|Expression|Terms|");
-                            file.WriteLine("|--------------|----|----|---------|-----|");
+                            // Negate all coefficients
+                            for (var i = 0; i < pslq.Length; i++) pslq[i] *= -1;
                         }
-                    }
 
-                    lock (Console.Out)
-                    {
-                        Console.WriteLine(line);
-                    }
+                        string scf;
 
-                    lock (file)
-                    {
-                        file.WriteLine(line);
+                        if (pslq[2] == 0)
+                        {
+                            var num = Poly.ToFactoredString(new[] { pslq[0] }, xs);
+                            var den = Poly.ToFactoredString(new[] { 0, pslq[3] }, xs);
+
+                            if (pslq[1] == 0)
+                                scf = LaTeXfrac(num, den);
+                            else
+                                scf = LaTeXfrac(num, den) + "+" + LaTeXfrac(pslq[1], pslq[3]);
+                        }
+                        else
+                        {
+                            var num = Poly.ToFactoredString(new[] { pslq[0], pslq[1] }, xs);
+                            var den = Poly.ToFactoredString(new[] { pslq[2], pslq[3] }, xs);
+                            scf = LaTeXfrac(num, den);
+                        }
+
+                        var k = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + LaTeXfrac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
+
+                        if (p[0] != 0)
+                            k = p[0] + "+" + k;
+
+                        var line = $"|{sd}|$${k}$$|$${scf}$$|{termsUsed}|";
+                        StreamWriter file;
+
+                        lock (files)
+                        {
+                            if (!files.TryGetValue(family, out file))
+                            {
+                                files[family] = file = File.CreateText(family.Replace(" ", "_") + ".md");
+                                file.AutoFlush = true;
+                                file.WriteLine("|Significant digits|Continued fraction|Expression|Terms|");
+                                file.WriteLine("|--------------|:-------:|:-------:|-----|");
+                            }
+                        }
+
+                        lock (Console.Out)
+                        {
+                            Console.WriteLine(line);
+                        }
+
+                        lock (file)
+                        {
+                            file.WriteLine(line);
+                        }
+
+                        break;
                     }
                 }
             });

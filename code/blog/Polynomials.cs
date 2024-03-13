@@ -270,15 +270,41 @@ namespace PlutoScarab
 
             if (poly.Length > 1 || poly[0] != 1)
             {
-                if (s.Length > 0)
+                string ps = ToString(poly, indeterminate);
+
+                if (poly.Length == 3)
                 {
-                    s.Append("(");
-                    s.Append(ToString(poly, indeterminate));
-                    s.Append(")");
+                    var a = poly[2];
+                    var b = poly[1];
+                    var c = poly[0];
+                    var d = b * b - 4 * a * c;
+
+                    if (d == 0)
+                    {
+                        var g = PolyI.GCD(b, 2 * a);
+                        ps = "(" + ToString([b / g, 2 * a / g], indeterminate) + ")" + Super(2);
+                    }
+                    else if (d > 0)
+                    {
+                        var sd = (int)Math.Round(Math.Sqrt(d));
+
+                        if (sd * sd == d)
+                        {
+                            var g = PolyI.GCD(b - sd, 2 * a);
+                            ps = "(" + ToString([(b - sd) / g, 2 * a / g], indeterminate) + ")";
+                            g = PolyI.GCD(b + sd, 2 * a);
+                            ps += "(" + ToString([(b + sd) / g, 2 * a / g], indeterminate) + ")";
+                        }
+                    }
+                }
+
+                if (s.Length > 0 && ps[0] != '(')
+                {
+                    s.Append("(" + ps + ")");
                 }
                 else
                 {
-                    s.Append(ToString(poly, indeterminate));
+                    s.Append(ps);
                 }
             }
 
