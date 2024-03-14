@@ -865,15 +865,47 @@ namespace PlutoScarab
             }
 #endif
 
+            bool TryComputeGCF(IEnumerable<BigInteger> ps, IEnumerable<BigInteger> qs, int digits, out string s, out int terms)
+            {
+                s = default;
+                terms = default;
+                var pterms = 0;
+                var qterms = 0;
+                ps = ps.Select(t => { pterms++; return t; });
+                qs = qs.Select(t => { qterms++; return t; });
+                var cf = CF.Simplify(ps, qs);
+                var start = cf.Take(1).ToList();
+
+                if (start.Count == 0)
+                    return false;
+
+                if (start[0].Sign < 0)
+                    return false;
+
+                pterms = qterms = 0;
+                s = CF.Digits(cf, digits);
+
+                if (s.EndsWith(CF.InvalidDigit))
+                    return false;
+
+                terms = Math.Max(pterms, qterms);
+                return true;
+            }
+
 #if true
             Dictionary<string, StreamWriter> files = new();
 
             var consts = new[]
             {
                 (MpfrFloat.ConstPi(), "\\pi", "π"),
-                (AGM(1, MpfrFloat.Sqrt(2)), "{\\operatorname{M}(1,\\sqrt2)}", "AGM"),
+                (MpfrFloat.Power(MpfrFloat.ConstPi(), 2), "\\pi^2", "π²"),
+                (AGM(1, MpfrFloat.Sqrt(2)), "{\\operatorname{agm}(1,\\sqrt2)}", "AGM"),
                 (ϖ, "\\varpi", "ϖ"),
                 (MpfrFloat.Exp(1.0), "e", "e"),
+                (MpfrFloat.Exp(MpfrFloat.ConstPi()), "e^\\pi", "e^π"),
+                (MpfrFloat.Log(2.0), "\\operatorname{log}2", "log2"),
+                (MpfrFloat.ConstCatalan(), "G", "Catalan"),
+                (MpfrFloat.ConstEuler(), "γ", "γ"),
             };
 
             int Content(int[] a)
@@ -883,7 +915,35 @@ namespace PlutoScarab
                 return a.Aggregate(GCD);
             }
 
-            Parallel.ForEach(Poly.WithDegree(1, 2), (pq, _) =>
+            const int pDegree = 1;
+            const int qDegree = 2;
+            var folder = $"degree{qDegree}over{pDegree}";
+            System.IO.Directory.CreateDirectory(folder);
+
+            IEnumerable<(int[], int[])> Pairs()
+            {
+                BigInteger n = 0;
+                var filename = folder + "\\index.txt";
+
+                if (System.IO.File.Exists(filename))
+                {
+                    n = BigInteger.Parse(System.IO.File.ReadAllText(filename));
+                }
+
+                Console.WriteLine("Press any key to stop and save progress");
+
+                while (!Console.KeyAvailable)
+                {
+                    yield return Poly.WithDegree(pDegree, qDegree, n);
+                    n++;
+                }
+
+                System.IO.File.WriteAllText(filename, n.ToString());
+                Console.ReadKey();
+                Console.WriteLine("Completing existing threads");
+            }
+
+            Parallel.ForEach(Pairs(), (pq, _) =>
             {
                 MpfrFloat.DefaultPrecision = 256;
                 var (p, q) = pq;
@@ -893,54 +953,44 @@ namespace PlutoScarab
                 if (contentP > 1 && contentP * contentP == contentQ)
                     return;
 
-                int pterms = 0, qterms = 0;
-                var ps = CF.Nats().Select(n => { pterms++; return Poly.Eval(p, n); });
-                var qs = CF.Nats().Skip(1).Select(n => { qterms++; return Poly.Eval(q, n); });
-                var cf = CF.Simplify(ps, qs);
-                List<BigInteger> capture = null;
+                var ps = CF.Nats().Select(n => Poly.Eval(p, n));
+                var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
 
-                IEnumerable<BigInteger> Captured(IEnumerable<BigInteger> terms)
-                {
-                    capture = new List<BigInteger>();
-
-                    foreach (var term in terms)
-                    {
-                        capture.Add(term);
-                        yield return term;
-                    }
-                }
-
-                if (!cf.Any())
+                if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
                     return;
 
-                var first = cf.First();
-
-                if (first.Sign < 0)
-                    return;
-
-                pterms = qterms = 0;
-                var s = CF.Digits(Captured(cf), Sigdig.Count);
-
-                if (s.EndsWith(CF.InvalidDigit))
-                    return;
-
-                var termsUsed = Math.Max(pterms, qterms);
                 var y = double.Parse(s);
                 Sigdig sd = new(s);
+                string precise = default;
 
                 foreach (var (x, xs, family) in consts)
                 {
                     var pslq = PSLQ(new[] { 1.0, (double)x, -y, -y * (double)x });
+
+                    // Skip rational values
+                    if (pslq[0] * pslq[3] == pslq[1] * pslq[2])
+                        continue;
+
                     var ecf = (pslq[0] + x * pslq[1]) / (pslq[2] + x * pslq[3]);
                     var ecfs = ecf.ToString();
 
-                    if (ecfs.Length < Sigdig.Count + 5)
+                    if (ecfs.Length < 2 * Sigdig.Count)
                         return;
 
                     Sigdig cd = new(ecfs);
 
                     if (cd == sd)
                     {
+                        // Confirm equivalence with higher precision
+                        if (precise is null)
+                        {
+                            if (!TryComputeGCF(ps, qs, Sigdig.Count * 2, out precise, out var ignore))
+                                break;
+                        }
+
+                        if (ecfs[..(Sigdig.Count * 2)] != precise[..(Sigdig.Count * 2)])
+                            continue;
+
                         if (pslq[0] + x * pslq[1] < 0)
                         {
                             // Negate all coefficients
@@ -956,8 +1006,22 @@ namespace PlutoScarab
 
                             if (pslq[1] == 0)
                                 scf = LaTeXfrac(num, den);
+                            else if (pslq[1] * pslq[3] < 0)
+                                scf = LaTeXfrac(num, den) + "-" + LaTeXfrac(-pslq[1], pslq[3]);
                             else
                                 scf = LaTeXfrac(num, den) + "+" + LaTeXfrac(pslq[1], pslq[3]);
+                        }
+                        else if (pslq[3] == 0)
+                        {
+                            var num = Poly.ToFactoredString(new[] { 0, pslq[1] }, xs);
+                            var den = Poly.ToFactoredString(new[] { pslq[2] }, xs);
+
+                            if (pslq[0] == 0)
+                                scf = LaTeXfrac(num, den);
+                            else if (pslq[0] * pslq[2] < 0)
+                                scf = LaTeXfrac(num, den) + "-" + LaTeXfrac(-pslq[0], pslq[2]);
+                            else
+                                scf = LaTeXfrac(num, den) + "+" + LaTeXfrac(pslq[0], pslq[2]);
                         }
                         else
                         {
@@ -978,10 +1042,16 @@ namespace PlutoScarab
                         {
                             if (!files.TryGetValue(family, out file))
                             {
-                                files[family] = file = File.CreateText(family.Replace(" ", "_") + ".md");
+                                var filename = folder + "\\" + family.Replace(" ", "_") + ".md";
+                                var needHeader = !File.Exists(filename);
+                                files[family] = file = File.AppendText(filename);
                                 file.AutoFlush = true;
-                                file.WriteLine("|Significant digits|Continued fraction|Expression|Terms|");
-                                file.WriteLine("|--------------|:-------:|:-------:|-----|");
+
+                                if (needHeader)
+                                {
+                                    file.WriteLine("|Significant digits|Continued fraction|Expression|Terms|");
+                                    file.WriteLine("|--------------|:-------:|:-------:|-----|");
+                                }
                             }
                         }
 

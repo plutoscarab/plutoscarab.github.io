@@ -31,7 +31,7 @@
             "program": "${workspaceFolder}/code/polygcf/bin/Debug/net8.0/polygcf.dll",
             "args": [],
             "cwd": "${workspaceFolder}/code/polygcf",
-            "console": "internalConsole",
+            "console": "externalTerminal",
             "stopAtEntry": false
         }
     ]

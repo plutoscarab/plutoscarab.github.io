@@ -4,6 +4,7 @@ _site/
 .jekyll-metadata
 obj
 bin
+degree*
 
 .fake
 .ionide

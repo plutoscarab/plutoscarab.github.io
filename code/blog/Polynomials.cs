@@ -116,18 +116,23 @@ namespace PlutoScarab
             }
         }
 
-        public static IEnumerable<(int[], int[])> WithDegree(int degree1, int degree2)
+        public static (int[], int[]) WithDegree(int degree1, int degree2, BigInteger n)
         {
             var degree = degree1 + degree2 + 1;
+            var t = ToTuple(n, degree + 1);
+            t[degree1]++;
+            t[^1]++;
+            t = t.Select(c => (c & 1) == 0 ? -c / 2 : c / 2 + 1).ToArray();
+            return (t[..(degree1 + 1)], t[(degree1 + 1)..]);
+        }
+
+        public static IEnumerable<(int[], int[])> WithDegree(int degree1, int degree2)
+        {
             BigInteger n = 0;
 
             while (true)
             {
-                var t = ToTuple(n, degree + 1);
-                t[degree1]++;
-                t[^1]++;
-                t = t.Select(c => (c & 1) == 0 ? -c / 2 : c / 2 + 1).ToArray();
-                yield return (t[..(degree1 + 1)], t[(degree1 + 1)..]);
+                yield return WithDegree(degree1, degree2, n);
                 n++;
             }
         }
