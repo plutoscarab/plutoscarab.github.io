@@ -186,7 +186,7 @@ namespace PlutoScarab
 
                     if (coeff < 0)
                     {
-                        s.Append("−");
+                        s.Append("-");
 
                         if (s.Length > 1)
                         {
@@ -210,7 +210,11 @@ namespace PlutoScarab
 
                     if (power > 1)
                     {
-                        s.Append(Super(power));
+                        s.Append('^');
+                        if (power > 9)
+                            s.Append($"{{{power}}}");
+                        else
+                            s.Append(power);
                     }
                 }
             }
@@ -256,11 +260,11 @@ namespace PlutoScarab
 
             if (gcd == -1)
             {
-                s.Append("−");
+                s.Append("-");
             }
             else if (gcd != 1)
             {
-                s.Append(gcd.ToString().Replace("-", "−"));
+                s.Append(gcd.ToString());
             }
 
             if (n > 0)
@@ -269,7 +273,10 @@ namespace PlutoScarab
 
                 if (n > 1)
                 {
-                    s.Append(Super(n));
+                    if (n > 9)
+                        s.Append($"^{{{n}}}");
+                    else
+                        s.Append($"^{n}");
                 }
             }
 
@@ -287,7 +294,7 @@ namespace PlutoScarab
                     if (d == 0)
                     {
                         var g = PolyI.GCD(b, 2 * a);
-                        ps = "(" + ToString([b / g, 2 * a / g], indeterminate) + ")" + Super(2);
+                        ps = "(" + ToString([b / g, 2 * a / g], indeterminate) + ")^2";
                     }
                     else if (d > 0)
                     {

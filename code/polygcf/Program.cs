@@ -900,13 +900,13 @@ namespace PlutoScarab
                 (MpfrFloat.Zeta(3.0), "\\zeta(3)", "ζ(3)"),
                 (MpfrFloat.ConstPi(), "\\pi", "π"),
                 (MpfrFloat.Power(MpfrFloat.ConstPi(), 2), "\\pi^2", "π²"),
-                (AGM(1, MpfrFloat.Sqrt(2)), "{\\operatorname{agm}(1,\\sqrt2)}", "AGM"),
+                (AGM(1, MpfrFloat.Sqrt(2)), "G", "AGM"),
                 (ϖ, "\\varpi", "ϖ"),
                 (MpfrFloat.Exp(1.0), "e", "e"),
                 (MpfrFloat.Exp(MpfrFloat.ConstPi()), "e^\\pi", "e^π"),
-                (MpfrFloat.Log(2.0), "\\operatorname{log}2", "log2"),
-                (MpfrFloat.ConstCatalan(), "G", "Catalan"),
-                (MpfrFloat.ConstEuler(), "γ", "γ"),
+                (MpfrFloat.Log(2.0), "\\log2", "log2"),
+                (MpfrFloat.ConstCatalan(), "K", "Catalan"),
+                (MpfrFloat.ConstEuler(), "\\gamma", "Gamma"),
             };
 
             int Content(int[] a)
@@ -916,8 +916,8 @@ namespace PlutoScarab
                 return a.Aggregate(GCD);
             }
 
-            const int pDegree = 2;
-            const int qDegree = 4;
+            const int pDegree = 1;
+            const int qDegree = 2;
             var folder = $"degree{qDegree}over{pDegree}";
             System.IO.Directory.CreateDirectory(folder);
 
@@ -952,7 +952,7 @@ namespace PlutoScarab
                 Console.WriteLine($"Completing existing threads at index {n:N0}");
             }
 
-            Parallel.ForEach(Pairs(), new ParallelOptions() { MaxDegreeOfParallelism = 1 }, (pq, _) =>
+            Parallel.ForEach(Pairs(), pq =>
             {
                 MpfrFloat.DefaultPrecision = 256;
                 var (p, q) = pq;
