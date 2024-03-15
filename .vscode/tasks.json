@@ -45,6 +45,24 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "polygcfrelease",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/code/polygcf/polygcf.csproj",
+                "-c",
+                "Release",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }

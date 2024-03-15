@@ -33,6 +33,17 @@
             "cwd": "${workspaceFolder}/code/polygcf",
             "console": "externalTerminal",
             "stopAtEntry": false
+        },
+        {
+            "name": "polygcf release",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "polygcfrelease",
+            "program": "${workspaceFolder}/code/polygcf/bin/Release/net8.0/polygcf.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/code/polygcf",
+            "console": "externalTerminal",
+            "stopAtEntry": false
         }
     ]
 }

@@ -234,11 +234,11 @@ namespace PlutoScarab
         {
             var γ = 2 / Math.Sqrt(3);
             var n = x.Length;
-            var A = new double[n + 1, n + 1];
-            var B = new double[n + 1, n + 1];
+            var A = new int[n + 1, n + 1];
+            var B = new int[n + 1, n + 1];
 
             for (var i = 1; i <= n; i++)
-                A[i, i] = B[i, i] = 1.0;
+                B[i, i] = A[i, i] = 1;
 
             var s = new double[n + 1];
 
@@ -268,16 +268,16 @@ namespace PlutoScarab
             {
                 for (var j = i - 1; j >= 1; j--)
                 {
-                    t = Math.Round(H[i, j] / H[j, j]);
-                    y[j] += t * y[i];
+                    var u = (int)Math.Round(H[i, j] / H[j, j]);
+                    y[j] += u * y[i];
 
                     for (var k = 1; k <= j; k++)
-                        H[i, k] -= t * H[j, k];
+                        H[i, k] -= u * H[j, k];
 
                     for (var k = 1; k <= n; k++)
                     {
-                        A[i, k] -= t * A[j, k];
-                        B[k, j] += t * B[k, i];
+                        A[i, k] -= u * A[j, k];
+                        B[k, j] += u * B[k, i];
                     }
                 }
             }
@@ -323,16 +323,16 @@ namespace PlutoScarab
                 {
                     for (var j = Math.Min(i - 1, m + 1); j >= 1; j--)
                     {
-                        t = Math.Round(H[i, j] / H[j, j]);
-                        y[j] += t * y[i];
+                        var u = (int)Math.Round(H[i, j] / H[j, j]);
+                        y[j] += u * y[i];
 
                         for (var k = 1; k <= j; k++)
-                            H[i, k] -= t * H[j, k];
+                            H[i, k] -= u * H[j, k];
 
                         for (var k = 1; k <= n; k++)
                         {
-                            A[i, k] -= t * A[j, k];
-                            B[k, j] += t * B[k, i];
+                            A[i, k] -= u * A[j, k];
+                            B[k, j] += u * B[k, i];
                         }
                     }
                 }
@@ -350,7 +350,7 @@ namespace PlutoScarab
                     var result = new int[n];
 
                     for (var i = 1; i <= n; i++)
-                        result[i - 1] = (int)Math.Round(B[i, c]);
+                        result[i - 1] = B[i, c];
 
                     return result;
                 }
@@ -901,6 +901,7 @@ namespace PlutoScarab
                 (MpfrFloat.ConstPi(), "\\pi", "π"),
                 (MpfrFloat.Power(MpfrFloat.ConstPi(), 2), "\\pi^2", "π²"),
                 (AGM(1, MpfrFloat.Sqrt(2)), "G", "AGM"),
+                (AGM(1, 2), "G_2", "AGM"),
                 (ϖ, "\\varpi", "ϖ"),
                 (MpfrFloat.Exp(1.0), "e", "e"),
                 (MpfrFloat.Exp(MpfrFloat.ConstPi()), "e^\\pi", "e^π"),
@@ -917,7 +918,7 @@ namespace PlutoScarab
             }
 
             const int pDegree = 1;
-            const int qDegree = 2;
+            const int qDegree = 1;
             var folder = $"degree{qDegree}over{pDegree}";
             System.IO.Directory.CreateDirectory(folder);
 
@@ -1044,7 +1045,9 @@ namespace PlutoScarab
                         if (p[0] != 0)
                             k = p[0] + "+" + k;
 
-                        var line = $"|{sd}|$${k}$$|$${scf}$$|{termsUsed}|";
+                        var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed})),{Sigdig.Count + 1}]".Replace("+", "%2B");
+
+                        var line = $"|{s}|[$${k}$$]({wa})|$${scf}$$|{termsUsed}|";
                         StreamWriter file;
 
                         lock (files)

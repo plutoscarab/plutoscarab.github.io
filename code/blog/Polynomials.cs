@@ -179,23 +179,13 @@ namespace PlutoScarab
 
                 if (coeff != 0)
                 {
-                    if (s.Length > 0)
-                    {
-                        s.Append(" ");
-                    }
-
                     if (coeff < 0)
                     {
                         s.Append("-");
-
-                        if (s.Length > 1)
-                        {
-                            s.Append(" ");
-                        }
                     }
                     else if (s.Length > 0)
                     {
-                        s.Append("+ ");
+                        s.Append("+");
                     }
 
                     if (Math.Abs(coeff) != 1 || power == 0)
@@ -220,6 +210,58 @@ namespace PlutoScarab
             }
 
             return s.ToString();
+        }
+
+        public static IEnumerable<(int[] factor, int exponent)> Factorize(int[] poly)
+        {
+            var g = poly.Aggregate(PolyI.GCD);
+
+            if (g != 1)
+            {
+                yield return ([g], 1);
+                poly = poly.Select(i => i / g).ToArray();
+            }
+
+            if (poly.Length != 3)
+            {
+                yield return (poly, 1);
+                yield break;
+            }
+
+            var a = poly[2];
+            var b = poly[1];
+            var c = poly[0];
+            var d = b * b - 4 * a * c;
+
+            if (d < 0)
+            {
+                yield return (poly, 1);
+                yield break;
+            }
+
+            if (d == 0)
+            {
+                g = PolyI.GCD(b, 2 * a);
+                yield return ([b / g, 2 * a / g], 2);
+                yield break;
+            }
+
+            var sd = (int)Math.Round(Math.Sqrt(d));
+
+            if (sd * sd != d)
+            {
+                yield return (poly, 1);
+                yield break;
+            }
+
+            if (Math.Abs(b - sd) < Math.Abs(b + sd))
+                sd = -sd;
+
+            g = PolyI.GCD(b + sd, 2 * a);
+            var q = new[] { (b + sd) / g, 2 * a / g };
+            yield return (q, 1);
+
+
         }
 
         public static string ToFactoredString(int[] poly) => ToFactoredString(poly, "𝑛");
