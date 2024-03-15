@@ -897,6 +897,7 @@ namespace PlutoScarab
 
             var consts = new[]
             {
+                (MpfrFloat.Zeta(3.0), "\\zeta(3)", "ζ(3)"),
                 (MpfrFloat.ConstPi(), "\\pi", "π"),
                 (MpfrFloat.Power(MpfrFloat.ConstPi(), 2), "\\pi^2", "π²"),
                 (AGM(1, MpfrFloat.Sqrt(2)), "{\\operatorname{agm}(1,\\sqrt2)}", "AGM"),
@@ -915,8 +916,8 @@ namespace PlutoScarab
                 return a.Aggregate(GCD);
             }
 
-            const int pDegree = 1;
-            const int qDegree = 2;
+            const int pDegree = 2;
+            const int qDegree = 4;
             var folder = $"degree{qDegree}over{pDegree}";
             System.IO.Directory.CreateDirectory(folder);
 
@@ -928,22 +929,30 @@ namespace PlutoScarab
                 if (System.IO.File.Exists(filename))
                 {
                     n = BigInteger.Parse(System.IO.File.ReadAllText(filename));
+                    Console.WriteLine($"Resuming from index {n:N0}");
                 }
 
                 Console.WriteLine("Press any key to stop and save progress");
+                var next = n + 10_000;
 
                 while (!Console.KeyAvailable)
                 {
                     yield return Poly.WithDegree(pDegree, qDegree, n);
                     n++;
+
+                    if (n >= next)
+                    {
+                        System.IO.File.WriteAllText(filename, n.ToString());
+                        next += 10_000;
+                    }
                 }
 
                 System.IO.File.WriteAllText(filename, n.ToString());
                 Console.ReadKey();
-                Console.WriteLine("Completing existing threads");
+                Console.WriteLine($"Completing existing threads at index {n:N0}");
             }
 
-            Parallel.ForEach(Pairs(), (pq, _) =>
+            Parallel.ForEach(Pairs(), new ParallelOptions() { MaxDegreeOfParallelism = 1 }, (pq, _) =>
             {
                 MpfrFloat.DefaultPrecision = 256;
                 var (p, q) = pq;
@@ -988,7 +997,7 @@ namespace PlutoScarab
                                 break;
                         }
 
-                        if (ecfs[..(Sigdig.Count * 2)] != precise[..(Sigdig.Count * 2)])
+                        if (ecfs[..(Sigdig.Count * 2 - 5)] != precise[..(Sigdig.Count * 2 - 5)])
                             continue;
 
                         if (pslq[0] + x * pslq[1] < 0)
@@ -1057,7 +1066,7 @@ namespace PlutoScarab
 
                         lock (Console.Out)
                         {
-                            Console.WriteLine(line);
+                            Console.WriteLine(scf);
                         }
 
                         lock (file)
