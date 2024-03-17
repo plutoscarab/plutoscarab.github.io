@@ -57,9 +57,9 @@ namespace PlutoScarab
             if (q.Length == 1 && p.Length == 1)
             {
                 if ((p[0] & 1) == 0)
-                    scf = "$$" + (p[0] / 2) + "+" + LaTeX.Sqrt(p[0] * p[0] / 4 + q[0]) + "$$";
+                    scf = "$$" + (p[0] / 2) + "+" + TeX.Sqrt(p[0] * p[0] / 4 + q[0]) + "$$";
                 else
-                    scf = "$$" + LaTeX.Frac(p[0].ToString() + "+" + LaTeX.Sqrt(p[0] * p[0] + 4 * q[0]), "2") + "$$";
+                    scf = "$$" + TeX.Frac(p[0].ToString() + "+" + TeX.Sqrt(p[0] * p[0] + 4 * q[0]), "2") + "$$";
 
                 family = "Surd";
             }
@@ -72,7 +72,7 @@ namespace PlutoScarab
             {
                 var (P, Q) = (p[0], q[1]);
                 var (a, b) = (P * P, 2 * Q);
-                scf = "$$" + LaTeX.Frac(LaTeX.Sqrt(2 * Q), LaTeX.Pow("e", a, b) + "\\Gamma\\left(\\frac12," + LaTeX.Frac(a, b) + "\\right)") + "$$";
+                scf = "$$" + TeX.Frac(TeX.Sqrt(2 * Q), TeX.Pow("e", a, b) + "\\Gamma\\left(\\frac12," + TeX.Frac(a, b) + "\\right)") + "$$";
                 family = "erfc";
             }
             else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
@@ -110,7 +110,7 @@ namespace PlutoScarab
         {
             MpfrFloat.DefaultPrecision = 256;
             var ϖ = MpfrFloat.Parse("2.6220575542921198104648395898911194136827549514316231628168");
-
+/*
             const int maxScore = 11;
 
             Dictionary<Sigdig, (int[], int[], string, int)> results = new();
@@ -158,7 +158,7 @@ namespace PlutoScarab
                 foreach (var (a, b) in Seq.Rationals().Take(520).Where((r, _) => r.Item1 < 5 && r.Item2 < 5))
                 {
                     var x = a / (MpfrFloat)b;
-                    MobiusOfConst(MpfrFloat.Power(f, x), LaTeX.Pow(fs, a, b), family);
+                    MobiusOfConst(MpfrFloat.Power(f, x), TeX.Pow(fs, a, b), family);
                 }
             }
 
@@ -213,7 +213,7 @@ namespace PlutoScarab
 
                 var x = (MpfrFloat.ConstPi() * p) / q;
                 var num = Poly.ToFactoredString(new[] { 0, p }, "\\pi");
-                var frac = LaTeX.Frac(num, q.ToString());
+                var frac = TeX.Frac(num, q.ToString());
 
                 void Add(string trig, Func<MpfrFloat, int?, MpfrRounding?, MpfrFloat> func)
                 {
@@ -260,7 +260,7 @@ namespace PlutoScarab
                 }
 
                 x = p / (MpfrFloat)q;
-                frac = LaTeX.Frac(p, q);
+                frac = TeX.Frac(p, q);
 
                 Add("tan", MpfrFloat.Tan);
                 Add("sin", MpfrFloat.Sin);
@@ -600,7 +600,7 @@ namespace PlutoScarab
                 file.Dispose();
             }
 #endif
-
+*/
             bool TryComputeGCF(IEnumerable<BigInteger> ps, IEnumerable<BigInteger> qs, int digits, out string s, out int terms)
             {
                 s = default;
@@ -647,9 +647,7 @@ namespace PlutoScarab
 
             var relations = new IntegerRelations.Relation[]
             {
-                IntegerRelations.Quadratic,
                 IntegerRelations.MobiusTransform,
-                IntegerRelations.RationalPower,
             };
 
             int Content(int[] a)
@@ -659,8 +657,8 @@ namespace PlutoScarab
                 return a.Aggregate(Functions.GCD);
             }
 
-            const int qDegree = 0;
-            const int pDegree = 1;
+            const int qDegree = 4;
+            const int pDegree = 2;
             var folder = $"degree{qDegree}over{pDegree}";
             System.IO.Directory.CreateDirectory(folder);
 
@@ -783,7 +781,7 @@ namespace PlutoScarab
 
                         if (found is not null)
                         {
-                            var k = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + LaTeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
+                            var k = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + TeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
 
                             if (p[0] != 0)
                                 k = p[0] + "+" + k;

@@ -1,7 +1,7 @@
 
 namespace PlutoScarab;
 
-public static class LaTeX 
+public static class TeX 
 {
     public static string Wrap(object n)
     {
@@ -36,12 +36,12 @@ public static class LaTeX
     {
         var g = Functions.GCD(a, b);
         (a, b) = (a / g, b / g);
-        return LaTeX.Fracs(a.ToString(), b.ToString());
+        return TeX.Fracs(a.ToString(), b.ToString());
     }
 
     public static string Pow(string expr, int a, int b)
     {
-        var f = LaTeX.Fracs(a, b);
+        var f = TeX.Fracs(a, b);
 
         if (f == "0")
             return "1";
