@@ -12,7 +12,7 @@ public static class IntegerRelations
 
         // (a + bx + cx^2) / d = y
         // a + bx + cx^2 - dy = 0
-        var pslq = PSLQ(new[] { 1.0, (double)x, (double)(x * x), -y });
+        var pslq = PSLQ(new[] { 1.0, x, x * x, -y });
 
         if (pslq[3] == 0)
             return false;
@@ -34,7 +34,7 @@ public static class IntegerRelations
 
         // x^(a/b) = y
         // a log x - b log y = 0
-        var pslq = PSLQ(new[] { Math.Log((double)x), -Math.Log(y) });
+        var pslq = PSLQ(new[] { MpfrFloat.Log(x), -MpfrFloat.Log(y) });
         z = MpfrFloat.Power(x, pslq[0] / (MpfrFloat)pslq[1]);
 
         if (z == 0 || MpfrFloat.Abs(x / z - 1, null) > 1e-6)
@@ -48,7 +48,7 @@ public static class IntegerRelations
     {
         // (a + bx) / (c + dx) = y
         // a + bx - cy - dxy = 0
-        var pslq = PSLQ(new[] { 1.0, (double)x, -y, -y * (double)x });
+        var pslq = PSLQ(new[] { 1.0, x, -y, -y * x });
 
         if (pslq[0] * pslq[3] == pslq[1] * pslq[2])
         {
@@ -100,9 +100,9 @@ public static class IntegerRelations
         return true;
     }
 
-    static int[] PSLQ(double[] x)
+    static int[] PSLQ(MpfrFloat[] x)
     {
-        var γ = 2 / Math.Sqrt(3);
+        var γ = 2 / MpfrFloat.Sqrt(3);
         var n = x.Length;
         var A = new int[n + 1, n + 1];
         var B = new int[n + 1, n + 1];
@@ -110,12 +110,12 @@ public static class IntegerRelations
         for (var i = 1; i <= n; i++)
             B[i, i] = A[i, i] = 1;
 
-        var s = new double[n + 1];
+        var s = new MpfrFloat[n + 1];
 
         for (var k = 1; k <= n; k++)
-            s[k] = Math.Sqrt(Enumerable.Range(k, n - k + 1).Select(j => x[j - 1] * x[j - 1]).Sum());
+            s[k] = MpfrFloat.Sqrt(Enumerable.Range(k, n - k + 1).Select(j => x[j - 1] * x[j - 1]).Aggregate((x, y) => x + y));
 
-        var y = new double[n + 1];
+        var y = new MpfrFloat[n + 1];
         var t = s[1];
 
         for (var k = 1; k <= n; k++)
@@ -124,7 +124,8 @@ public static class IntegerRelations
             s[k] /= t;
         }
 
-        var H = new double[n + 1, n];
+        var H = new MpfrFloat[n + 1, n];
+        for (var i = 0; i <= n; i++) for (var j = 0; j < n; j++) H[i, j] = 0;
 
         for (var i = 1; i <= n; i++)
         {
@@ -138,7 +139,7 @@ public static class IntegerRelations
         {
             for (var j = i - 1; j >= 1; j--)
             {
-                var u = (int)Math.Round(H[i, j] / H[j, j]);
+                var u = (int)MpfrFloat.Round(H[i, j] / H[j, j]);
                 y[j] += u * y[i];
 
                 for (var k = 1; k <= j; k++)
@@ -154,12 +155,12 @@ public static class IntegerRelations
 
         while (true)
         {
-            var max = double.MinValue;
+            MpfrFloat max = double.MinValue;
             var m = -1;
 
             for (var i = 1; i < n; i++)
             {
-                var q = Math.Pow(γ, i) * Math.Abs(H[i, i]);
+                var q = MpfrFloat.Power(γ, i) * MpfrFloat.Abs(H[i, i], null);
                 if (q > max) { max = q; m = i; }
             }
 
@@ -176,7 +177,7 @@ public static class IntegerRelations
 
             if (m <= n - 2)
             {
-                var t0 = Math.Sqrt(Math.Pow(H[m, m], 2) + Math.Pow(H[m, m + 1], 2));
+                var t0 = MpfrFloat.Hypot(H[m, m], H[m, m + 1]);
                 var t1 = H[m, m] / t0;
                 var t2 = H[m, m + 1] / t0;
 
@@ -193,7 +194,7 @@ public static class IntegerRelations
             {
                 for (var j = Math.Min(i - 1, m + 1); j >= 1; j--)
                 {
-                    var u = (int)Math.Round(H[i, j] / H[j, j]);
+                    var u = (int)MpfrFloat.Round(H[i, j] / H[j, j]);
                     y[j] += u * y[i];
 
                     for (var k = 1; k <= j; k++)
@@ -207,15 +208,16 @@ public static class IntegerRelations
                 }
             }
 
-            var min = double.MaxValue;
+            MpfrFloat min = double.MaxValue;
             var c = -1;
 
             for (var i = 1; i <= n; i++)
             {
-                if (Math.Abs(y[i]) < min) { min = Math.Abs(y[i]); c = i; }
+                var abs = MpfrFloat.Abs(y[i], null);
+                if (abs < min) { min = abs; c = i; }
             }
 
-            if (min < 1e-7)
+            if (min < 1e-8)
             {
                 var result = new int[n];
 

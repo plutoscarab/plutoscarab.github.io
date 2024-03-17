@@ -659,7 +659,7 @@ namespace PlutoScarab
                 return a.Aggregate(Functions.GCD);
             }
 
-            const int qDegree = 2;
+            const int qDegree = 0;
             const int pDegree = 1;
             var folder = $"degree{qDegree}over{pDegree}";
             System.IO.Directory.CreateDirectory(folder);
@@ -722,7 +722,7 @@ namespace PlutoScarab
 
             Parallel.ForEach(Pairs(), pq =>
             {
-                try
+                //try
                 {
                     MpfrFloat.DefaultPrecision = 256;
                     var (p, q) = pq;
@@ -824,11 +824,13 @@ namespace PlutoScarab
                         }
                     }
                 }
+                /*
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex);
                     Debugger.Break();
                 }
+                */
             });
 #endif
         }
