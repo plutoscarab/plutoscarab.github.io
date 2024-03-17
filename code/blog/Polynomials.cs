@@ -275,20 +275,6 @@ namespace PlutoScarab
                 return ToString(poly, indeterminate);
             }
 
-            var gcd = 0;
-
-            foreach (var coeff in poly.Where(_ => _ != 0))
-            {
-                gcd = PolyI.GCD(coeff, gcd);
-            }
-
-            gcd = Math.Abs(gcd);
-
-            for (var i = 0; i < poly.Length; i++)
-            {
-                poly[i] /= gcd;
-            }
-
             var n = poly.TakeWhile(coeff => coeff == 0).Count();
 
             if (n > 0)
@@ -296,6 +282,16 @@ namespace PlutoScarab
                 var arr = new int[poly.Length - n];
                 Array.Copy(poly, n, arr, 0, arr.Length);
                 poly = arr;
+            }
+
+            var gcd = Math.Abs(poly.Aggregate(PolyI.GCD));
+
+            if (poly.All(_ => _ <= 0))
+                gcd = -gcd;
+
+            for (var i = 0; i < poly.Length; i++)
+            {
+                poly[i] /= gcd;
             }
 
             var s = new StringBuilder();
@@ -336,7 +332,12 @@ namespace PlutoScarab
                     if (d == 0)
                     {
                         var g = PolyI.GCD(b, 2 * a);
-                        ps = "(" + ToString([b / g, 2 * a / g], indeterminate) + ")^2";
+                        ps = "";
+
+                        if (c < 0)
+                            ps = "-";
+
+                        ps += "(" + ToString([b / g, 2 * a / g], indeterminate) + ")^2";
                     }
                     else if (d > 0)
                     {
@@ -345,9 +346,31 @@ namespace PlutoScarab
                         if (sd * sd == d)
                         {
                             var g = PolyI.GCD(b - sd, 2 * a);
-                            ps = "(" + ToString([(b - sd) / g, 2 * a / g], indeterminate) + ")";
+                            if (g == 0) g = 1;
+                            var h = (b - sd) / g;
+                            var i = 2 * a / g;
                             g = PolyI.GCD(b + sd, 2 * a);
-                            ps += "(" + ToString([(b + sd) / g, 2 * a / g], indeterminate) + ")";
+                            if (g == 0) g = 1;
+                            var j = (b + sd) / g;
+                            var k = 2 * a / g;
+                            ps = "";
+
+                            if (Math.Sign(h * j) != Math.Sign(c))
+                            {
+                                if (h < 0 && i < 0)
+                                    (h, i) = (-h, -i);
+                                else if (j < 0 && k < 0)
+                                    (j, k) = (-j, -k);
+                                else if (h < 0 || i < 0)
+                                    (h, i) = (-h, -i);
+                                else if (j < 0 || k < 0)
+                                    (j, k) = (-j, -k);
+                                else
+                                    ps = "-";
+                            }
+
+                            ps += "(" + ToString([h, i], indeterminate) + ")";
+                            ps += "(" + ToString([j, k], indeterminate) + ")";
                         }
                     }
                 }

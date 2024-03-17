@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Numerics;
+global using Sdcb.Arithmetic.Mpfr;
+
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Numerics;
 using System.Threading.Tasks;
-using Sdcb.Arithmetic.Mpfr;
 
 namespace PlutoScarab
 {
@@ -47,145 +49,6 @@ namespace PlutoScarab
 
     class Program
     {
-        static int GCD(int m, int n)
-        {
-            var sign = m < 0 && n < 0 ? -1 : 1;
-
-            while (n != 0)
-            {
-                (m, n) = (n, m % n);
-            }
-
-            return Math.Abs(m) * sign;
-        }
-
-        static string LaTeXwrap(object n)
-        {
-            var s = n.ToString();
-
-            if (s.Length == 1 && !char.IsLetter(s[0]))
-                return s;
-
-            return "{" + s + "}";
-        }
-
-        static string LaTeXfrac(string a, string b)
-        {
-            if (b == "1") return a;
-            return "\\frac" + LaTeXwrap(a) + LaTeXwrap(b);
-        }
-
-        static string LaTeXfracs(string a, string b)
-        {
-            if (b == "1") return a;
-            return a + "/" + b;
-        }
-
-        static string LaTeXfrac(int a, int b)
-        {
-            var g = GCD(a, b);
-            (a, b) = (a / g, b / g);
-            return LaTeXfrac(a.ToString(), b.ToString());
-        }
-
-        static string LaTeXfracs(int a, int b)
-        {
-            var g = GCD(a, b);
-            (a, b) = (a / g, b / g);
-            return LaTeXfracs(a.ToString(), b.ToString());
-        }
-
-        static string LaTeXpow(string expr, int a, int b)
-        {
-            var f = LaTeXfracs(a, b);
-
-            if (f == "0")
-                return "1";
-
-            if (f == "1")
-                return expr;
-
-            if (f == "1/2")
-                return "\\sqrt" + LaTeXwrap(expr);
-
-            return expr + "^" + LaTeXwrap(f);
-        }
-
-        static (int n, int f) SquareFree(int n)
-        {
-            var s = (int)(Math.Sqrt(n) + .5);
-
-            if (s * s == n)
-                return (1, s);
-
-            var f = 1;
-
-            for (var i = 2; i < s; i++)
-            {
-                var ii = i * i;
-
-                if ((n % ii) == 0)
-                {
-                    f *= i;
-                    n /= ii;
-                }
-            }
-
-            return (n, f);
-        }
-
-        static string LaTeXsqrt(string n)
-        {
-            if (n == "1")
-                return "1";
-
-            return "\\sqrt" + LaTeXwrap(n);
-        }
-
-        static string LaTeXsqrt(int n)
-        {
-            (n, var f) = SquareFree(n);
-
-            if (n == 1)
-                return f.ToString();
-
-            if (f > 1)
-                return f + "\\sqrt" + LaTeXwrap(n);
-
-            return "\\sqrt" + LaTeXwrap(n);
-        }
-
-        static string LaTeXprod(string a, string b)
-        {
-            if (a == "1")
-                return b;
-
-            if (b == "1")
-                return a;
-
-            return a + " " + b;
-        }
-
-        static string LaTeXoverSqrt(int a, int b)
-        {
-            // a / sqrt(b)
-            (b, var c) = SquareFree(b); // -> a / (c * sqrt(b))
-
-            var d = GCD(a, b);  // (a/d)*sqrt(d) / (c * sqrt(b/d))
-            (a, b) = (a / d, b / d); // a sqrt(d) / (c sqrt(b))
-
-            var g = GCD(a, c);
-            (a, c) = (a / g, c / g);
-
-            if (d == 1)
-                return LaTeXfrac(a.ToString(), LaTeXprod(c.ToString(), LaTeXsqrt(b)));
-
-            if (b == 1)
-                return LaTeXfrac(LaTeXprod(a.ToString(), LaTeXsqrt(d)), c.ToString());
-
-            return LaTeXprod(LaTeXfrac(a, c), LaTeXsqrt(LaTeXfrac(d, b)));
-        }
-
         static Info Lookup(Sigdig sd, ConcurrentDictionary<Sigdig, Info> lookups, int[] p, int[] q)
         {
             var scf = string.Empty;
@@ -194,9 +57,9 @@ namespace PlutoScarab
             if (q.Length == 1 && p.Length == 1)
             {
                 if ((p[0] & 1) == 0)
-                    scf = "$$" + (p[0] / 2) + "+" + LaTeXsqrt(p[0] * p[0] / 4 + q[0]) + "$$";
+                    scf = "$$" + (p[0] / 2) + "+" + LaTeX.Sqrt(p[0] * p[0] / 4 + q[0]) + "$$";
                 else
-                    scf = "$$" + LaTeXfrac(p[0].ToString() + "+" + LaTeXsqrt(p[0] * p[0] + 4 * q[0]), "2") + "$$";
+                    scf = "$$" + LaTeX.Frac(p[0].ToString() + "+" + LaTeX.Sqrt(p[0] * p[0] + 4 * q[0]), "2") + "$$";
 
                 family = "Surd";
             }
@@ -209,7 +72,7 @@ namespace PlutoScarab
             {
                 var (P, Q) = (p[0], q[1]);
                 var (a, b) = (P * P, 2 * Q);
-                scf = "$$" + LaTeXfrac(LaTeXsqrt(2 * Q), LaTeXpow("e", a, b) + "\\Gamma\\left(\\frac12," + LaTeXfrac(a, b) + "\\right)") + "$$";
+                scf = "$$" + LaTeX.Frac(LaTeX.Sqrt(2 * Q), LaTeX.Pow("e", a, b) + "\\Gamma\\left(\\frac12," + LaTeX.Frac(a, b) + "\\right)") + "$$";
                 family = "erfc";
             }
             else if (q.Length == 1 && q[0] < 0 && p.Length == 2 && p[0] == 3 && p[1] == 2)
@@ -228,133 +91,6 @@ namespace PlutoScarab
             }
 
             return new(scf, family);
-        }
-
-        static int[] PSLQ(double[] x)
-        {
-            var γ = 2 / Math.Sqrt(3);
-            var n = x.Length;
-            var A = new int[n + 1, n + 1];
-            var B = new int[n + 1, n + 1];
-
-            for (var i = 1; i <= n; i++)
-                B[i, i] = A[i, i] = 1;
-
-            var s = new double[n + 1];
-
-            for (var k = 1; k <= n; k++)
-                s[k] = Math.Sqrt(Enumerable.Range(k, n - k + 1).Select(j => x[j - 1] * x[j - 1]).Sum());
-
-            var y = new double[n + 1];
-            var t = s[1];
-
-            for (var k = 1; k <= n; k++)
-            {
-                y[k] = x[k - 1] / t;
-                s[k] /= t;
-            }
-
-            var H = new double[n + 1, n];
-
-            for (var i = 1; i <= n; i++)
-            {
-                if (i < n) H[i, i] = s[i + 1] / s[i];
-
-                for (var j = 1; j < i; j++)
-                    H[i, j] = -y[i] * y[j] / (s[j] * s[j + 1]);
-            }
-
-            for (var i = 2; i <= n; i++)
-            {
-                for (var j = i - 1; j >= 1; j--)
-                {
-                    var u = (int)Math.Round(H[i, j] / H[j, j]);
-                    y[j] += u * y[i];
-
-                    for (var k = 1; k <= j; k++)
-                        H[i, k] -= u * H[j, k];
-
-                    for (var k = 1; k <= n; k++)
-                    {
-                        A[i, k] -= u * A[j, k];
-                        B[k, j] += u * B[k, i];
-                    }
-                }
-            }
-
-            while (true)
-            {
-                var max = double.MinValue;
-                var m = -1;
-
-                for (var i = 1; i < n; i++)
-                {
-                    var q = Math.Pow(γ, i) * Math.Abs(H[i, i]);
-                    if (q > max) { max = q; m = i; }
-                }
-
-                (y[m], y[m + 1]) = (y[m + 1], y[m]);
-
-                for (var i = 1; i <= n; i++)
-                    (A[m, i], A[m + 1, i]) = (A[m + 1, i], A[m, i]);
-
-                for (var i = 1; i < n; i++)
-                    (H[m, i], H[m + 1, i]) = (H[m + 1, i], H[m, i]);
-
-                for (var i = 1; i <= n; i++)
-                    (B[i, m], B[i, m + 1]) = (B[i, m + 1], B[i, m]);
-
-                if (m <= n - 2)
-                {
-                    var t0 = Math.Sqrt(Math.Pow(H[m, m], 2) + Math.Pow(H[m, m + 1], 2));
-                    var t1 = H[m, m] / t0;
-                    var t2 = H[m, m + 1] / t0;
-
-                    for (var i = m; i <= n; i++)
-                    {
-                        var t3 = H[i, m];
-                        var t4 = H[i, m + 1];
-                        H[i, m] = t1 * t3 + t2 * t4;
-                        H[i, m + 1] = -t2 * t3 + t1 * t4;
-                    }
-                }
-
-                for (var i = m + 1; i <= n; i++)
-                {
-                    for (var j = Math.Min(i - 1, m + 1); j >= 1; j--)
-                    {
-                        var u = (int)Math.Round(H[i, j] / H[j, j]);
-                        y[j] += u * y[i];
-
-                        for (var k = 1; k <= j; k++)
-                            H[i, k] -= u * H[j, k];
-
-                        for (var k = 1; k <= n; k++)
-                        {
-                            A[i, k] -= u * A[j, k];
-                            B[k, j] += u * B[k, i];
-                        }
-                    }
-                }
-
-                var min = double.MaxValue;
-                var c = -1;
-
-                for (var i = 1; i <= n; i++)
-                {
-                    if (Math.Abs(y[i]) < min) { min = Math.Abs(y[i]); c = i; }
-                }
-
-                if (min < 1e-7)
-                {
-                    var result = new int[n];
-
-                    for (var i = 1; i <= n; i++)
-                        result[i - 1] = B[i, c];
-
-                    return result;
-                }
-            }
         }
 
         static MpfrFloat AGM(MpfrFloat a, MpfrFloat b)
@@ -391,12 +127,12 @@ namespace PlutoScarab
                 {
                     var q = c + d * x;
                     if (q <= 0) continue;
-                    var g1 = GCD(c, d);
+                    var g1 = Functions.GCD(c, d);
                     if (g1 == 5 || g1 == -5) continue;
                     var v = (a + b * x) / q;
                     if (v <= 0 || v == 1) continue;
-                    var g2 = GCD(a, b);
-                    if (GCD(g1, g2) != 1) continue;
+                    var g2 = Functions.GCD(a, b);
+                    if (Functions.GCD(g1, g2) != 1) continue;
                     if (v == g2 / (MpfrFloat)g1) continue;
 
                     var num = Poly.ToFactoredString(new[] { a, b }, xs);
@@ -422,7 +158,7 @@ namespace PlutoScarab
                 foreach (var (a, b) in Seq.Rationals().Take(520).Where((r, _) => r.Item1 < 5 && r.Item2 < 5))
                 {
                     var x = a / (MpfrFloat)b;
-                    MobiusOfConst(MpfrFloat.Power(f, x), LaTeXpow(fs, a, b), family);
+                    MobiusOfConst(MpfrFloat.Power(f, x), LaTeX.Pow(fs, a, b), family);
                 }
             }
 
@@ -477,7 +213,7 @@ namespace PlutoScarab
 
                 var x = (MpfrFloat.ConstPi() * p) / q;
                 var num = Poly.ToFactoredString(new[] { 0, p }, "\\pi");
-                var frac = LaTeXfrac(num, q.ToString());
+                var frac = LaTeX.Frac(num, q.ToString());
 
                 void Add(string trig, Func<MpfrFloat, int?, MpfrRounding?, MpfrFloat> func)
                 {
@@ -524,7 +260,7 @@ namespace PlutoScarab
                 }
 
                 x = p / (MpfrFloat)q;
-                frac = LaTeXfrac(p, q);
+                frac = LaTeX.Frac(p, q);
 
                 Add("tan", MpfrFloat.Tan);
                 Add("sin", MpfrFloat.Sin);
@@ -574,7 +310,7 @@ namespace PlutoScarab
             {
                 for (var d = 1; d < 19; d++)
                 {
-                    var g = GCD(n, d);
+                    var g = Functions.GCD(n, d);
 
                     if (g == 1)
                     {
@@ -899,7 +635,6 @@ namespace PlutoScarab
             {
                 (MpfrFloat.Zeta(3.0), "\\zeta(3)", "ζ(3)"),
                 (MpfrFloat.ConstPi(), "\\pi", "π"),
-                (MpfrFloat.Power(MpfrFloat.ConstPi(), 2), "\\pi^2", "π²"),
                 (AGM(1, MpfrFloat.Sqrt(2)), "G", "AGM"),
                 (AGM(1, 2), "G_2", "AGM"),
                 (ϖ, "\\varpi", "ϖ"),
@@ -910,15 +645,22 @@ namespace PlutoScarab
                 (MpfrFloat.ConstEuler(), "\\gamma", "Gamma"),
             };
 
+            var relations = new IntegerRelations.Relation[]
+            {
+                IntegerRelations.Quadratic,
+                IntegerRelations.MobiusTransform,
+                IntegerRelations.RationalPower,
+            };
+
             int Content(int[] a)
             {
                 a = a.Select(Math.Abs).Where(i => i != 0).ToArray();
                 if (a.Length == 1) return a[0];
-                return a.Aggregate(GCD);
+                return a.Aggregate(Functions.GCD);
             }
 
+            const int qDegree = 2;
             const int pDegree = 1;
-            const int qDegree = 1;
             var folder = $"degree{qDegree}over{pDegree}";
             System.IO.Directory.CreateDirectory(folder);
 
@@ -953,132 +695,139 @@ namespace PlutoScarab
                 Console.WriteLine($"Completing existing threads at index {n:N0}");
             }
 
+            IEnumerable<(int prime, int exponent)> Factors(int n)
+            {
+                foreach (var p in Foundations.Sequences.PrimesInt32())
+                {
+                    if (p * p > n)
+                    {
+                        if (n > 1)
+                            yield return (n, 1);
+                            
+                        yield break;
+                    }
+
+                    var e = 0;
+
+                    while ((n % p) == 0)
+                    {
+                        e++;
+                        n /= p;
+                    }
+
+                    if (e > 0)
+                        yield return (p, e);
+                }
+            }
+
             Parallel.ForEach(Pairs(), pq =>
             {
-                MpfrFloat.DefaultPrecision = 256;
-                var (p, q) = pq;
-                var contentP = Content(p);
-                var contentQ = Content(q);
-
-                if (contentP > 1 && contentP * contentP == contentQ)
-                    return;
-
-                var ps = CF.Nats().Select(n => Poly.Eval(p, n));
-                var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
-
-                if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
-                    return;
-
-                var y = double.Parse(s);
-                Sigdig sd = new(s);
-                string precise = default;
-
-                foreach (var (x, xs, family) in consts)
+                try
                 {
-                    var pslq = PSLQ(new[] { 1.0, (double)x, -y, -y * (double)x });
+                    MpfrFloat.DefaultPrecision = 256;
+                    var (p, q) = pq;
 
-                    // Skip rational values
-                    if (pslq[0] * pslq[3] == pslq[1] * pslq[2])
-                        continue;
+                    // Does the content of Q contain a square factor of P?
+                    var contentP = Factors(Content(p)).ToList();
+                    var contentQ = Factors(Content(q)).ToList();
 
-                    var ecf = (pslq[0] + x * pslq[1]) / (pslq[2] + x * pslq[3]);
-                    var ecfs = ecf.ToString();
+                    foreach (var (prime, exponent) in contentQ)
+                        if (exponent > 1)
+                            if (contentP.Any(factor => factor.prime == prime))
+                                return;
 
-                    if (ecfs.Length < 2 * Sigdig.Count)
+                    var ps = CF.Nats().Select(n => Poly.Eval(p, n));
+                    var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
+
+                    if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
                         return;
 
-                    Sigdig cd = new(ecfs);
+                    var y = double.Parse(s);
+                    Sigdig sd = new(s);
+                    string precise = default;
+                    string scf = default;
 
-                    if (cd == sd)
+                    foreach (var (x, xs, family) in consts)
                     {
-                        // Confirm equivalence with higher precision
-                        if (precise is null)
+                        MpfrFloat ecf;
+                        IntegerRelations.Relation found = default;
+
+                        foreach (var relation in relations)
                         {
-                            if (!TryComputeGCF(ps, qs, Sigdig.Count * 2, out precise, out var ignore))
-                                break;
-                        }
+                            if (!relation(x, xs, y, out ecf, out scf))
+                                continue;
 
-                        if (ecfs[..(Sigdig.Count * 2 - 5)] != precise[..(Sigdig.Count * 2 - 5)])
-                            continue;
+                            var ecfs = ecf.ToString();
 
-                        if (pslq[0] + x * pslq[1] < 0)
-                        {
-                            // Negate all coefficients
-                            for (var i = 0; i < pslq.Length; i++) pslq[i] *= -1;
-                        }
+                            if (ecfs.Length < 2 * Sigdig.Count)
+                                continue;
 
-                        string scf;
+                            Sigdig cd = new(ecfs);
 
-                        if (pslq[2] == 0)
-                        {
-                            var num = Poly.ToFactoredString(new[] { pslq[0] }, xs);
-                            var den = Poly.ToFactoredString(new[] { 0, pslq[3] }, xs);
+                            if (cd != sd)
+                                continue;
 
-                            if (pslq[1] == 0)
-                                scf = LaTeXfrac(num, den);
-                            else if (pslq[1] * pslq[3] < 0)
-                                scf = LaTeXfrac(num, den) + "-" + LaTeXfrac(-pslq[1], pslq[3]);
-                            else
-                                scf = LaTeXfrac(num, den) + "+" + LaTeXfrac(pslq[1], pslq[3]);
-                        }
-                        else if (pslq[3] == 0)
-                        {
-                            var num = Poly.ToFactoredString(new[] { 0, pslq[1] }, xs);
-                            var den = Poly.ToFactoredString(new[] { pslq[2] }, xs);
-
-                            if (pslq[0] == 0)
-                                scf = LaTeXfrac(num, den);
-                            else if (pslq[0] * pslq[2] < 0)
-                                scf = LaTeXfrac(num, den) + "-" + LaTeXfrac(-pslq[0], pslq[2]);
-                            else
-                                scf = LaTeXfrac(num, den) + "+" + LaTeXfrac(pslq[0], pslq[2]);
-                        }
-                        else
-                        {
-                            var num = Poly.ToFactoredString(new[] { pslq[0], pslq[1] }, xs);
-                            var den = Poly.ToFactoredString(new[] { pslq[2], pslq[3] }, xs);
-                            scf = LaTeXfrac(num, den);
-                        }
-
-                        var k = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + LaTeXfrac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
-
-                        if (p[0] != 0)
-                            k = p[0] + "+" + k;
-
-                        var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed})),{Sigdig.Count + 1}]".Replace("+", "%2B");
-
-                        var line = $"|{s}|[$${k}$$]({wa})|$${scf}$$|{termsUsed}|";
-                        StreamWriter file;
-
-                        lock (files)
-                        {
-                            if (!files.TryGetValue(family, out file))
+                            // Confirm equivalence with higher precision
+                            if (precise is null)
                             {
-                                var filename = folder + "\\" + family.Replace(" ", "_") + ".md";
-                                var needHeader = !File.Exists(filename);
-                                files[family] = file = File.AppendText(filename);
-                                file.AutoFlush = true;
+                                if (!TryComputeGCF(ps, qs, Sigdig.Count * 2, out precise, out var ignore))
+                                    break;
+                            }
 
-                                if (needHeader)
+                            if (ecfs[..(Sigdig.Count * 2 - 5)] != precise[..(Sigdig.Count * 2 - 5)])
+                                continue;
+
+                            found = relation;
+                            break;
+                        }
+
+                        if (found is not null)
+                        {
+                            var k = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + LaTeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
+
+                            if (p[0] != 0)
+                                k = p[0] + "+" + k;
+
+                            var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed})),{Sigdig.Count + 1}]".Replace("+", "%2B");
+                            var coeffs = string.Join(",", q) + "; " + string.Join(",", p);
+                            var line = $"|{s}|[$${k}$$]({wa})|$${scf}$$|{termsUsed}|{coeffs}|";
+                            StreamWriter file;
+
+                            lock (files)
+                            {
+                                if (!files.TryGetValue(family, out file))
                                 {
-                                    file.WriteLine("|Significant digits|Continued fraction|Expression|Terms|");
-                                    file.WriteLine("|--------------|:-------:|:-------:|-----|");
+                                    var filename = folder + "\\" + family.Replace(" ", "_") + ".md";
+                                    var needHeader = !File.Exists(filename);
+                                    files[family] = file = File.AppendText(filename);
+                                    file.AutoFlush = true;
+
+                                    if (needHeader)
+                                    {
+                                        file.WriteLine("|Significant digits|Continued fraction|Expression|Terms|Coefficients|");
+                                        file.WriteLine("|--------------|:-------:|:-------:|-----|-----|");
+                                    }
                                 }
                             }
-                        }
 
-                        lock (Console.Out)
-                        {
-                            Console.WriteLine(scf);
-                        }
+                            lock (Console.Out)
+                            {
+                                Console.WriteLine(scf);
+                            }
 
-                        lock (file)
-                        {
-                            file.WriteLine(line);
-                        }
+                            lock (file)
+                            {
+                                file.WriteLine(line);
+                            }
 
-                        break;
+                            break;
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                    Debugger.Break();
                 }
             });
 #endif

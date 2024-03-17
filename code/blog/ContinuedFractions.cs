@@ -218,6 +218,7 @@ namespace PlutoScarab
             int timeoutLoops,
             TimeoutBehavior timeoutBehavior)
         {
+            var maxConvergent = BigInteger.Pow(10, 10000);
             BigInteger a = 0, b = 1, c = 1, d = 0;
             var loops = 0;
 
@@ -230,6 +231,23 @@ namespace PlutoScarab
 
                     yield return Signal;
                     yield break;
+                }
+
+                if ((loops % 10) == 0)
+                {
+                    var g = BigInteger.GreatestCommonDivisor(BigInteger.GreatestCommonDivisor(a, b), BigInteger.GreatestCommonDivisor(c, d));
+
+                    if (!g.IsZero)
+                        (a, b, c, d) = (a / g, b / g, c / g, d / g);
+
+                    if (BigInteger.Abs(a) > maxConvergent || BigInteger.Abs(b) > maxConvergent || BigInteger.Abs(c) > maxConvergent || BigInteger.Abs(d) > maxConvergent)
+                    {
+                        if (timeoutBehavior == TimeoutBehavior.Throw)
+                            throw new InvalidOperationException();
+
+                        yield return Signal;
+                        yield break;
+                    }
                 }
 
                 (a, b) = (u * b, a + t * b);
