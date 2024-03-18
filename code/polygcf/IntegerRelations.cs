@@ -44,6 +44,43 @@ public static class IntegerRelations
         return true;
     }
 
+    public static string LaTeXMobius(int[] pslq, string xs)
+    {
+        if (pslq[2] == 0)
+        {
+            var num = Poly.ToFactoredString(new[] { pslq[0] }, xs);
+            var den = Poly.ToFactoredString(new[] { 0, pslq[3] }, xs);
+
+            if (pslq[1] == 0)
+                return TeX.Frac(num, den);
+
+            if (pslq[1] * pslq[3] < 0)
+                return TeX.Frac(num, den) + "-" + TeX.Frac(-pslq[1], pslq[3]);
+
+            return TeX.Frac(num, den) + "+" + TeX.Frac(pslq[1], pslq[3]);
+        }
+
+        if (pslq[3] == 0)
+        {
+            var num = Poly.ToFactoredString(new[] { 0, pslq[1] }, xs);
+            var den = Poly.ToFactoredString(new[] { pslq[2] }, xs);
+
+            if (pslq[0] == 0)
+                return TeX.Frac(num, den);
+
+            if (pslq[0] * pslq[2] < 0)
+                return TeX.Frac(num, den) + "-" + TeX.Frac(-pslq[0], pslq[2]);
+
+            return TeX.Frac(num, den) + "+" + TeX.Frac(pslq[0], pslq[2]);
+        }
+
+        {
+            var num = Poly.ToFactoredString(new[] { pslq[0], pslq[1] }, xs);
+            var den = Poly.ToFactoredString(new[] { pslq[2], pslq[3] }, xs);
+            return TeX.Frac(num, den);
+        }
+    }
+
     public static bool MobiusTransform(MpfrFloat x, string xs, double y, out MpfrFloat z, out string scf)
     {
         // (a + bx) / (c + dx) = y
@@ -65,38 +102,7 @@ public static class IntegerRelations
         }
 
         z = (pslq[0] + x * pslq[1]) / (pslq[2] + x * pslq[3]);
-
-        if (pslq[2] == 0)
-        {
-            var num = Poly.ToFactoredString(new[] { pslq[0] }, xs);
-            var den = Poly.ToFactoredString(new[] { 0, pslq[3] }, xs);
-
-            if (pslq[1] == 0)
-                scf = TeX.Frac(num, den);
-            else if (pslq[1] * pslq[3] < 0)
-                scf = TeX.Frac(num, den) + "-" + TeX.Frac(-pslq[1], pslq[3]);
-            else
-                scf = TeX.Frac(num, den) + "+" + TeX.Frac(pslq[1], pslq[3]);
-        }
-        else if (pslq[3] == 0)
-        {
-            var num = Poly.ToFactoredString(new[] { 0, pslq[1] }, xs);
-            var den = Poly.ToFactoredString(new[] { pslq[2] }, xs);
-
-            if (pslq[0] == 0)
-                scf = TeX.Frac(num, den);
-            else if (pslq[0] * pslq[2] < 0)
-                scf = TeX.Frac(num, den) + "-" + TeX.Frac(-pslq[0], pslq[2]);
-            else
-                scf = TeX.Frac(num, den) + "+" + TeX.Frac(pslq[0], pslq[2]);
-        }
-        else
-        {
-            var num = Poly.ToFactoredString(new[] { pslq[0], pslq[1] }, xs);
-            var den = Poly.ToFactoredString(new[] { pslq[2], pslq[3] }, xs);
-            scf = TeX.Frac(num, den);
-        }
-
+        scf = LaTeXMobius(pslq, xs);
         return true;
     }
 
