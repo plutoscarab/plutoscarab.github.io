@@ -24,12 +24,26 @@ namespace PlutoScarab
         {
             if (s[0] == '-') s = s[1..];
             s = s.Replace(".", "");
-            if (!s.All(char.IsDigit)) throw new ArgumentException(nameof(s));
+            if (!s.All(char.IsDigit)) throw new ArgumentException($"{s} contains non-digit", nameof(s));
             var i = 0;
             while (s[i] == '0') i++;
             s = s[i..];
-            if (s.Length < Count) throw new ArgumentException(nameof(s));
+            if (s.Length < Count) throw new ArgumentException($"{s} too short", nameof(s));
             this.s = s[..Count];
+        }
+
+        public static bool TryCreate(string s, out Sigdig sd)
+        {
+            try
+            {
+                sd = new Sigdig(s);
+                return true;
+            }
+            catch
+            {
+                sd = default;
+                return false;
+            }
         }
 
         public override string ToString() => s;
@@ -155,178 +169,203 @@ namespace PlutoScarab
             s = CF.Digits(cf, digits);
 
             if (s.EndsWith(CF.InvalidDigit))
-                return false;
+            {
+                pterms = qterms = 0;
+                var sf = CF.Normalize(CF.Simplify(ps, qs).Take(10 * digits).ToList());
+                s = CF.Digits(sf, digits);
+
+                if (s.EndsWith(CF.InvalidDigit))
+                    return false;
+            }
 
             terms = Math.Max(pterms, qterms);
             return true;
         }
 
+        static void LowDegreeE()
+        {
+            using var file = File.CreateText("degree1over1/e.md");
+            file.WriteLine("|Significant digits|Continued fraction|Expression|Terms|Coefficients|");
+            file.WriteLine("|--------------|:-------:|:-------:|-----|-----|");
+
+            for (var k = 0; true; k++)
+            {
+                int[] q = [0, 1];
+                int[] p = [k, 1];
+                BigInteger[] m = [1, 0, -S(k, 0), D(0, k)];
+
+                if (BigInteger.Abs(m[2]) > int.MaxValue || BigInteger.Abs(m[3]) > int.MaxValue)
+                    break;
+
+                var ps = CF.Nats().Select(n => Poly.Eval(p, n));
+                var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
+
+                if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
+                    continue;
+
+                var scf = IntegerRelations.LaTeXMobius([1, 0, (int)m[2], (int)m[3]], "e");
+                var e = MpfrFloat.Exp(1);
+                var z = 1 / ((int)m[2] + (int)m[3] * e);
+
+                if (z.ToString()[..(s.Length)] != s)
+                    Debugger.Break();
+
+                var cf = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + TeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
+
+                if (p[0] != 0)
+                    cf = p[0] + "+" + cf;
+
+                var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed + 1})),{Sigdig.Count + 1}]".Replace("+", "%2B");
+                var coeffs = string.Join(",", q) + "; " + string.Join(",", p);
+                var line = $"|{s}|[$${cf}$$]({wa})|$${scf}$$|{termsUsed}|{coeffs}|";
+                file.WriteLine(line);
+            }
+
+            for (var k = 0; true; k++)
+            {
+                int[] q = [0, -1];
+                int[] p = [k + 2, 1];
+                var sign = 1 - 2 * (k & 1);
+                BigInteger[] m = [0, 1, -S(0, k) * sign, D(k, 0) * sign];
+
+                if (BigInteger.Abs(m[2]) > int.MaxValue || BigInteger.Abs(m[3]) > int.MaxValue)
+                    break;
+
+                var ps = CF.Nats().Select(n => Poly.Eval(p, n));
+                var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
+
+                if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
+                    continue;
+
+                var scf = IntegerRelations.LaTeXMobius([0, (int)m[1], (int)m[2], (int)m[3]], "e");
+                var e = MpfrFloat.Exp(1);
+                var z = (int)m[1] * e / ((int)m[2] + (int)m[3] * e);
+
+                if (z.ToString()[..(s.Length)] != s)
+                    Debugger.Break();
+
+                var cf = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + TeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
+
+                if (p[0] != 0)
+                    cf = p[0] + "+" + cf;
+
+                var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed + 1})),{Sigdig.Count + 1}]".Replace("+", "%2B");
+                var coeffs = string.Join(",", q) + "; " + string.Join(",", p);
+                var line = $"|{s}|[$${cf}$$]({wa})|$${scf}$$|{termsUsed}|{coeffs}|";
+                file.WriteLine(line);
+            }
+
+            for (var j = 1; D(j, 0) < int.MaxValue; j++)
+            {
+                for (var k = 0; true; k++)
+                {
+                    int[] q = [j, 1];
+                    int[] p = [j + k, 1];
+                    BigInteger[] m = [j * S(k, j - 1), -j * D(j - 1, k), -S(k, j), D(j, k)];
+                    var g = BigInteger.GreatestCommonDivisor(BigInteger.GreatestCommonDivisor(m[0], m[1]), BigInteger.GreatestCommonDivisor(m[2], m[3]));
+                    (m[0], m[1], m[2], m[3]) = (m[0] / g, m[1] / g, m[2] / g, m[3] / g);
+
+                    if (BigInteger.Abs(m[0]) > int.MaxValue || BigInteger.Abs(m[1]) > int.MaxValue || BigInteger.Abs(m[2]) > int.MaxValue || BigInteger.Abs(m[3]) > int.MaxValue)
+                        break;
+
+                    var ps = CF.Nats().Select(n => Poly.Eval(p, n));
+                    var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
+
+                    if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
+                        continue;
+
+                    var scf = IntegerRelations.LaTeXMobius([(int)m[0], (int)m[1], (int)m[2], (int)m[3]], "e");
+                    var e = MpfrFloat.Exp(1);
+                    var z = ((int)m[0] + (int)m[1] * e) / ((int)m[2] + (int)m[3] * e);
+
+                    if (z.ToString()[..(s.Length)] != s)
+                        Debugger.Break();
+
+                    var cf = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + TeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
+
+                    if (p[0] != 0)
+                        cf = p[0] + "+" + cf;
+
+                    var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed + 1})),{Sigdig.Count + 1}]".Replace("+", "%2B");
+                    var coeffs = string.Join(",", q) + "; " + string.Join(",", p);
+                    var line = $"|{s}|[$${cf}$$]({wa})|$${scf}$$|{termsUsed}|{coeffs}|";
+                    file.WriteLine(line);
+                }
+            }
+
+            for (var j = 1; D(j, 0) < int.MaxValue; j++)
+            {
+                for (var k = 0; true; k++)
+                {
+                    int[] q = [-j, -1];
+                    int[] p = [j + k + 2, 1];
+                    BigInteger[] m = [-j * S(j - 1, k), j * D(k, j - 1), -S(j, k), D(k, j)];
+                    var g = BigInteger.GreatestCommonDivisor(BigInteger.GreatestCommonDivisor(m[0], m[1]), BigInteger.GreatestCommonDivisor(m[2], m[3]));
+                    (m[0], m[1], m[2], m[3]) = (m[0] / g, m[1] / g, m[2] / g, m[3] / g);
+
+                    if (BigInteger.Abs(m[0]) > int.MaxValue || BigInteger.Abs(m[1]) > int.MaxValue || BigInteger.Abs(m[2]) > int.MaxValue || BigInteger.Abs(m[3]) > int.MaxValue)
+                        break;
+
+                    var ps = CF.Nats().Select(n => Poly.Eval(p, n));
+                    var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
+
+                    if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
+                        continue;
+
+                    var scf = IntegerRelations.LaTeXMobius([(int)m[0], (int)m[1], (int)m[2], (int)m[3]], "e");
+                    var e = MpfrFloat.Exp(1);
+                    var z = ((int)m[0] + (int)m[1] * e) / ((int)m[2] + (int)m[3] * e);
+
+                    if (z.ToString()[..(s.Length)] != s)
+                        Debugger.Break();
+
+                    var cf = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + TeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
+
+                    if (p[0] != 0)
+                        cf = p[0] + "+" + cf;
+
+                    var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed + 1})),{Sigdig.Count + 1}]".Replace("+", "%2B");
+                    var coeffs = string.Join(",", q) + "; " + string.Join(",", p);
+                    var line = $"|{s}|[$${cf}$$]({wa})|$${scf}$$|{termsUsed}|{coeffs}|";
+                    file.WriteLine(line);
+                }
+            }
+        }
+
+        static void LowDegreePi()
+        {
+            for (var a = 0; a <= 6; a++)
+            {
+                for (var b = -4; b <= 5; b++)
+                {
+                    for (var c = -12; c <= 12; c++)
+                    {
+                        int[] q = [a * (2 * b - 1), 2 * b - 1 - 2 * a, -2];
+                        int[] p = [c, 3];
+                        var ps = CF.Nats().Select(n => Poly.Eval(p, n));
+                        var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
+
+                        if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
+                            continue;
+
+                        var y = double.Parse(s);
+
+                        if (!IntegerRelations.MobiusTransform(MpfrFloat.ConstPi(), "\\pi", y, out var z, out var scf))
+                            continue;
+
+                        if (MpfrFloat.Abs(z / y - 1, null) > 1e-15)
+                            continue;
+
+                        var pslq = IntegerRelations.PSLQ(new[] { 1.0, Math.PI, -y, -y * Math.PI });
+                        Console.WriteLine($"{a}, {2 * b - 1}, {c}, {pslq[0]}, {pslq[1]}, {pslq[2]}, {pslq[3]}");
+                    }
+                }
+            }
+        }
+
         static void Main(string[] args)
         {
             MpfrFloat.DefaultPrecision = 256;
-
-            {
-                using var file = File.CreateText("degree1over1/e.md");
-                file.WriteLine("|Significant digits|Continued fraction|Expression|Terms|Coefficients|");
-                file.WriteLine("|--------------|:-------:|:-------:|-----|-----|");
-
-                for (var k = 0; true; k++)
-                {
-                    int[] q = [0, 1];
-                    int[] p = [k, 1];
-                    BigInteger[] m = [1, 0, -S(k, 0), D(0, k)];
-
-                    if (BigInteger.Abs(m[2]) > int.MaxValue || BigInteger.Abs(m[3]) > int.MaxValue)
-                        break;
-
-                    var ps = CF.Nats().Select(n => Poly.Eval(p, n));
-                    var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
-
-                    if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
-                        continue;
-
-                    var scf = IntegerRelations.LaTeXMobius([1, 0, (int)m[2], (int)m[3]], "e");
-                    var e = MpfrFloat.Exp(1);
-                    var z = 1 / ((int)m[2] + (int)m[3] * e);
-
-                    if (z.ToString()[..(s.Length)] != s)
-                        Debugger.Break();
-
-                    var cf = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + TeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
-
-                    if (p[0] != 0)
-                        cf = p[0] + "+" + cf;
-
-                    var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed + 1})),{Sigdig.Count + 1}]".Replace("+", "%2B");
-                    var coeffs = string.Join(",", q) + "; " + string.Join(",", p);
-                    var line = $"|{s}|[$${cf}$$]({wa})|$${scf}$$|{termsUsed}|{coeffs}|";
-                    file.WriteLine(line);
-                }
-
-                for (var k = 0; true; k++)
-                {
-                    int[] q = [0, -1];
-                    int[] p = [k + 2, 1];
-                    var sign = 1 - 2 * (k & 1);
-                    BigInteger[] m = [0, 1, -S(0, k)* sign, D(k, 0) * sign];
-
-                    if (BigInteger.Abs(m[2]) > int.MaxValue || BigInteger.Abs(m[3]) > int.MaxValue)
-                        break;
-
-                    var ps = CF.Nats().Select(n => Poly.Eval(p, n));
-                    var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
-
-                    if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
-                        continue;
-
-                    var scf = IntegerRelations.LaTeXMobius([0, (int)m[1], (int)m[2], (int)m[3]], "e");
-                    var e = MpfrFloat.Exp(1);
-                    var z = (int)m[1] * e / ((int)m[2] + (int)m[3] * e);
-
-                    if (z.ToString()[..(s.Length)] != s)
-                        Debugger.Break();
-
-                    var cf = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + TeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
-
-                    if (p[0] != 0)
-                        cf = p[0] + "+" + cf;
-
-                    var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed + 1})),{Sigdig.Count + 1}]".Replace("+", "%2B");
-                    var coeffs = string.Join(",", q) + "; " + string.Join(",", p);
-                    var line = $"|{s}|[$${cf}$$]({wa})|$${scf}$$|{termsUsed}|{coeffs}|";
-                    file.WriteLine(line);
-                }
-
-                for (var j = 1; D(j, 0) < int.MaxValue; j++)
-                {
-                    for (var k = 0; true; k++)
-                    {
-                        int[] q = [j, 1];
-                        int[] p = [j + k, 1];
-                        BigInteger[] m = [j * S(k, j - 1), -j * D(j - 1, k), -S(k, j), D(j, k)];
-                        var g = BigInteger.GreatestCommonDivisor(BigInteger.GreatestCommonDivisor(m[0], m[1]), BigInteger.GreatestCommonDivisor(m[2], m[3]));
-                        (m[0], m[1], m[2], m[3]) = (m[0] / g, m[1] / g, m[2] / g, m[3] / g);
-
-                        if (BigInteger.Abs(m[0]) > int.MaxValue || BigInteger.Abs(m[1]) > int.MaxValue || BigInteger.Abs(m[2]) > int.MaxValue || BigInteger.Abs(m[3]) > int.MaxValue)
-                            break;
-
-                        var ps = CF.Nats().Select(n => Poly.Eval(p, n));
-                        var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
-
-                        if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
-                            continue;
-
-                        var scf = IntegerRelations.LaTeXMobius([(int)m[0], (int)m[1], (int)m[2], (int)m[3]], "e");
-                        var e = MpfrFloat.Exp(1);
-                        var z = ((int)m[0] + (int)m[1] * e) / ((int)m[2] + (int)m[3] * e);
-
-                        if (z.ToString()[..(s.Length)] != s)
-                            Debugger.Break();
-
-                        var cf = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + TeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
-
-                        if (p[0] != 0)
-                            cf = p[0] + "+" + cf;
-
-                        var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed + 1})),{Sigdig.Count + 1}]".Replace("+", "%2B");
-                        var coeffs = string.Join(",", q) + "; " + string.Join(",", p);
-                        var line = $"|{s}|[$${cf}$$]({wa})|$${scf}$$|{termsUsed}|{coeffs}|";
-                        file.WriteLine(line);
-                    }
-                }
-
-                for (var j = 1; D(j, 0) < int.MaxValue; j++)
-                {
-                    for (var k = 0; true; k++)
-                    {
-                        int[] q = [-j, -1];
-                        int[] p = [j + k + 2, 1];
-                        BigInteger[] m = [-j * S(j - 1, k), j * D(k, j - 1), -S(j, k), D(k, j)];
-                        var g = BigInteger.GreatestCommonDivisor(BigInteger.GreatestCommonDivisor(m[0], m[1]), BigInteger.GreatestCommonDivisor(m[2], m[3]));
-                        (m[0], m[1], m[2], m[3]) = (m[0] / g, m[1] / g, m[2] / g, m[3] / g);
-
-                        if (BigInteger.Abs(m[0]) > int.MaxValue || BigInteger.Abs(m[1]) > int.MaxValue || BigInteger.Abs(m[2]) > int.MaxValue || BigInteger.Abs(m[3]) > int.MaxValue)
-                            break;
-
-                        var ps = CF.Nats().Select(n => Poly.Eval(p, n));
-                        var qs = CF.Nats().Skip(1).Select(n => Poly.Eval(q, n));
-
-                        if (!TryComputeGCF(ps, qs, Sigdig.Count, out var s, out var termsUsed))
-                            continue;
-
-                        var scf = IntegerRelations.LaTeXMobius([(int)m[0], (int)m[1], (int)m[2], (int)m[3]], "e");
-                        var e = MpfrFloat.Exp(1);
-                        var z = ((int)m[0] + (int)m[1] * e) / ((int)m[2] + (int)m[3] * e);
-
-                        if (z.ToString()[..(s.Length)] != s)
-                            Debugger.Break();
-
-                        var cf = "\\operatornamewithlimits{\\huge K}_{n=1}^\\infty" + TeX.Frac(Poly.ToFactoredString(q, "n"), Poly.ToFactoredString(p, "n"));
-
-                        if (p[0] != 0)
-                            cf = p[0] + "+" + cf;
-
-                        var wa = $"https://wolframalpha.com/input?i=N[{p[0]}+continuedfractionk({Poly.ToFactoredString(q, "n")},{Poly.ToFactoredString(p, "n")},(n,1,{termsUsed + 1})),{Sigdig.Count + 1}]".Replace("+", "%2B");
-                        var coeffs = string.Join(",", q) + "; " + string.Join(",", p);
-                        var line = $"|{s}|[$${cf}$$]({wa})|$${scf}$$|{termsUsed}|{coeffs}|";
-                        file.WriteLine(line);
-                    }
-                }
-
-                /*
-                var c = D(j, k);
-                var d = -S(k, j);
-                var a = -j * D(j - 1, k);
-                var b = j * S(k, j - 1);
-
-                var c = D(k, j);
-                var d = -S(j, k);
-                var a = j * D(k, j - 1);
-                var b = -j * S(j - 1, k);
-                var g = BigInteger.GreatestCommonDivisor(BigInteger.GreatestCommonDivisor(a, b), BigInteger.GreatestCommonDivisor(c, d));
-                (a, b, c, d) = (a / g, b / g, c / g, d / g);
-                */
-            }
 
             var ϖ = MpfrFloat.Parse("2.6220575542921198104648395898911194136827549514316231628168");
             /*
@@ -849,7 +888,7 @@ namespace PlutoScarab
                 return a.Aggregate(Functions.GCD);
             }
 
-            const int qDegree = 2;
+            const int qDegree = 0;
             const int pDegree = 1;
             var folder = $"degree{qDegree}over{pDegree}";
             System.IO.Directory.CreateDirectory(folder);
@@ -933,7 +972,13 @@ namespace PlutoScarab
                             return;
 
                         var y = double.Parse(s);
-                        Sigdig sd = new(s);
+
+                        if (y < 0)
+                            return;
+
+                        if (!Sigdig.TryCreate(s, out var sd))
+                            return;
+
                         string precise = default;
                         string scf = default;
 

@@ -106,7 +106,7 @@ public static class IntegerRelations
         return true;
     }
 
-    static int[] PSLQ(double[] x)
+    public static int[] PSLQ(double[] x)
     {
         var γ = 2 / Math.Sqrt(3);
         var n = x.Length;
@@ -221,7 +221,7 @@ public static class IntegerRelations
                 if (Math.Abs(y[i]) < min) { min = Math.Abs(y[i]); c = i; }
             }
 
-            if (min < 1e-8)
+            if (min < 1e-10)
             {
                 var result = new int[n];
 
